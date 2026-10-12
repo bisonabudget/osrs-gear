@@ -368,17 +368,19 @@ export const App = () => {
       </main>
 
       <footer className="small-print">
-        <p>
-          DPS from the <a href="https://tools.runescape.wiki/osrs-dps/" target="_blank" rel="noreferrer">OSRS Wiki DPS calculator</a>.
-          Prices from the <a href="https://prices.runescape.wiki/" target="_blank" rel="noreferrer">OSRS Wiki real-time prices</a>, as Grand Exchange instant-buy prices.
-        </p>
-        {DONATE_URL && (
-          <p className="donate">
-            Free to use with no ads. If it saved you some GP, you can{' '}
-            <a href={DONATE_URL} target="_blank" rel="noreferrer">buy me a coffee</a>.
+        <div className="credits">
+          <p>
+            DPS from the <a href="https://tools.runescape.wiki/osrs-dps/" target="_blank" rel="noreferrer">OSRS Wiki DPS calculator</a>.
+            Prices from the <a href="https://prices.runescape.wiki/" target="_blank" rel="noreferrer">OSRS Wiki real-time prices</a>, as Grand Exchange instant-buy prices.
           </p>
+          <p>Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.</p>
+        </div>
+        {DONATE_URL && (
+          <div className="donate">
+            <p>Free to use with no ads. If it saved you some GP:</p>
+            <a href={DONATE_URL} target="_blank" rel="noreferrer">Buy me a coffee</a>
+          </div>
         )}
-        <p>Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.</p>
       </footer>
 
       <ThemeButton />

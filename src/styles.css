@@ -217,16 +217,38 @@ p { margin: 0; }
 .small-print {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 20px 32px 48px;
+  padding: 20px 32px 84px;
   border-top: 1px solid var(--line);
   font-size: 12px;
   color: var(--muted);
-  display: grid;
-  gap: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
 }
 
-.donate a { color: var(--accent); font-weight: 600; text-decoration: none; }
-.donate a:hover { text-decoration: underline; }
+.credits { display: grid; gap: 4px; }
+
+.donate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.donate a {
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+
+.donate a:hover { transform: translateY(-1px); }
 
 /* Monster */
 
@@ -1116,7 +1138,8 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
   .rsn-field { height: 40px; padding-right: 4px; }
   .rsn-load { height: 32px; }
   .layout { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 16px 16px 40px; }
-  .small-print { padding: 16px 16px 80px; }
+  .small-print { padding: 16px 16px 80px; flex-direction: column; }
+  .donate { flex-wrap: wrap; }
   .col-monster { display: block; }
   .monster-name { font-size: 36px; }
   .monster-name.long { font-size: 28px; }
