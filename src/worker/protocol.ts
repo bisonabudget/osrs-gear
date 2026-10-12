@@ -78,7 +78,10 @@ export interface Bonuses {
 }
 
 export interface Stats {
+  /** Averaged over the whole kill. */
   dps: number;
+  /** At the monster's full HP, which differs when hits change as it loses HP, like ruby bolt procs. */
+  startDps: number;
   maxHit: number;
   /** Chance each attack hits, from 0 to 1. */
   accuracy: number;

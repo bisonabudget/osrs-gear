@@ -16,7 +16,11 @@ const Headline = ({ outcome: { stats }, monster }: Part & { monster: MonsterInfo
     <div className="headline">
       <p className="label">DPS</p>
       <p className="dps">{stats.dps.toFixed(2)}</p>
-      {weakness && (
+      {Math.abs(stats.startDps - stats.dps) >= 0.005 && (
+        <p className="edge" title="Some hits change as the monster loses HP, like ruby bolt procs, which shrink below 500 HP">
+          Averaged over the kill, {stats.startDps.toFixed(2)} at full HP
+        </p>
+      )}      {weakness && (
         <p className="edge">
           <img src={wikiImage(`${weakness.element[0].toUpperCase()}${weakness.element.slice(1)} rune`)} alt="" />
           Uses its {weakness.element} weakness for {weakness.severity}% more accuracy and damage

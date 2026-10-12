@@ -5,6 +5,7 @@ import { PotionMap } from '@/utils';
 import Potion from '@/enums/Potion';
 import { Prayer, PrayerMap } from '@/enums/Prayer';
 import UserIssueType from '@/enums/UserIssueType';
+import { EquipmentCategory } from '@/enums/EquipmentCategory';
 import { Monster } from '@/types/Monster';
 import { Player, PlayerEquipment, PlayerSkills } from '@/types/Player';
 import { PlayerCombatStyle } from '@/types/PlayerCombatStyle';
@@ -126,15 +127,89 @@ export const buildPlayer = (setup: SetupInput, monster: Monster, character: Char
   return player;
 };
 
-/** DPS, or 0 when the engine says the Setup doesn't work here. */
-export const dpsOf = (setup: SetupInput, monster: Monster, character: Character): number => {
-  const calc = new PlayerVsNPCCalc(buildPlayer(setup, monster, character), monster, { loadoutName: 'x' });
+// HP taken together when working out hits that change as the monster loses HP.
+const BAND = 40;
+
+type DelayedHits = ReturnType<PlayerVsNPCCalc['distAtHp']>;
+
+// Chance of each damage total from one attack.
+const histogramOf = (hits: DelayedHits): Float64Array => {
+  const max = hits.reduce((m, [wh]) => Math.max(m, wh.getSum()), 0);
+  const hist = new Float64Array(max + 1);
+  for (const [wh] of hits) hist[wh.getSum()] += wh.probability;
+  return hist;
+};
+
+// Average hits to kill when some hits depend on the monster's current HP, like ruby bolt procs
+// or the keris partisan of the sun in ToA. The engine's own count uses the hits at full HP all
+// the way down, so this redoes it with the hits at each HP the monster passes through.
+const htkOf = (calc: PlayerVsNPCCalc): number => {
+  const base = calc.getDistribution().zipped.withProbabilisticDelays(calc.getWeaponDelayProvider());
+  const baseHist = histogramOf(base);
+  const startHp = (calc as unknown as { monster: Monster }).monster.inputs.monsterCurrentHp;
+  const htk = new Float64Array(startHp + 1);
+  // Working the hits out afresh at every HP is slow, so HPs are taken in bands that share the
+  // hits from the middle of the band.
+  const hists = new Map<number, Float64Array>();
+  for (let hp = 1; hp <= startHp; hp++) {
+    const mid = Math.min(startHp, Math.floor((hp - 1) / BAND) * BAND + BAND / 2);
+    let hist = hists.get(mid);
+    if (!hist) {
+      const hits = calc.distAtHp(base, mid);
+      hist = hits === base ? baseHist : histogramOf(hits);
+      hists.set(mid, hist);
+    }
+    if (hist[0] >= 1) return Infinity;
+    let val = 1;
+    for (let hit = 1; hit < hist.length; hit++) val += hist[hit] * htk[Math.max(0, hp - hit)];
+    htk[hp] = val / (1 - hist[0]);
+  }
+  return htk[startHp];
+};
+
+/**
+ * How much more slowly setups that depend on the monster's HP really kill it, kept for one monster.
+ * Working it out is slow, so setups with near enough the same average hit and accuracy share it.
+ * Ruby bolts and the keris partisan of the sun change their own hits, so those also need the same
+ * weapon, ammo and style. Otherwise it's the monster that changes, like Vardorvis's Defence.
+ */
+export type FightCache = Map<string, number>;
+
+const ownEffect = ({ equipment, style }: Player) => equipment.weapon?.name === 'Keris partisan of the sun'
+  || (style.type === 'ranged' && equipment.weapon?.category === EquipmentCategory.CROSSBOW && /^Ruby (dragon )?bolts \(e\)$/.test(equipment.ammo?.name ?? ''));
+
+const fightKey = (player: Player, calc: PlayerVsNPCCalc) => [
+  ...(ownEffect(player) ? [player.equipment.weapon?.id, player.equipment.ammo?.id, player.style.name] : []),
+  player.style.type, Math.round(Math.log(calc.getExpectedDamage()) * 100), Math.round(calc.getHitChance() * 100),
+].join('|');
+
+// How many times as many hits the kill really takes as the engine's count at full HP: under 1 when
+// the monster gets easier as it loses HP, like Vardorvis, and 1 for setups that don't depend on it.
+const slowerBy = (calc: PlayerVsNPCCalc, player: Player, monster: Monster, cache?: FightCache): number => {
+  if (!calc.distIsCurrentHpDependent(player, monster)) return 1;
+  const key = cache && fightKey(player, calc);
+  let slower = key ? cache.get(key) : undefined;
+  if (slower === undefined) {
+    slower = htkOf(calc) / calc.getHtk();
+    if (key) cache!.set(key, slower);
+  }
+  return slower;
+};
+
+/** DPS over the whole kill, or 0 when the engine says the Setup doesn't work here. */
+export const dpsOf = (setup: SetupInput, monster: Monster, character: Character, cache?: FightCache): number => {
+  const player = buildPlayer(setup, monster, character);
+  const calc = new PlayerVsNPCCalc(player, monster, { loadoutName: 'x' });
   if (calc.userIssues.some((i) => BLOCKING.has(i.type))) return 0;
-  return calc.getDps();
+  const dps = calc.getDps();
+  return dps > 0 ? dps / slowerBy(calc, player, monster, cache) : 0;
 };
 
 export interface Result {
+  /** Averaged over the whole kill. */
   dps: number;
+  /** At the monster's full HP, which is higher for hits that shrink as it loses HP. */
+  startDps: number;
   maxHit: number;
   accuracy: number;
   /** Seconds to kill, on average. */
@@ -144,16 +219,19 @@ export interface Result {
   details: { label: string, value: string, highlight: boolean }[];
 }
 
-export const evaluate = (setup: SetupInput, monster: Monster, character: Character, withDetails = false): Result => {
+export const evaluate = (setup: SetupInput, monster: Monster, character: Character, withDetails = false, cache?: FightCache): Result => {
   const player = buildPlayer(setup, monster, character);
   const calc = new PlayerVsNPCCalc(player, monster, { loadoutName: 'x', detailedOutput: withDetails });
   const blocked = calc.userIssues.some((i) => BLOCKING.has(i.type));
-  const dps = blocked ? 0 : calc.getDps();
+  const startDps = blocked ? 0 : calc.getDps();
+  const slower = startDps > 0 ? slowerBy(calc, player, monster, cache) : 1;
+  const dps = startDps / slower;
   return {
     dps,
+    startDps,
     maxHit: calc.getMax(),
     accuracy: calc.getDisplayHitChance(),
-    killTime: dps > 0 ? calc.getTtk() : Infinity,
+    killTime: dps > 0 ? calc.getTtk() * slower : Infinity,
     player,
     issues: calc.userIssues.map((i) => i.message),
     details: withDetails ? calc.details.map((d) => ({ label: d.label, value: d.displayValue, highlight: d.highlight })) : [],

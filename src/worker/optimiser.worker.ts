@@ -124,10 +124,11 @@ const foeOf = (o: Optimiser): Stats['foe'] => {
 };
 
 const statsOf = (o: Optimiser, setup: Setup): Stats => {
-  const result = evaluate(setup, o.monster, o.character, true);
+  const result = evaluate(setup, o.monster, o.character, true, o.fightCache);
   const { offensive, defensive, bonuses } = result.player;
   return {
     dps: result.dps,
+    startDps: result.startDps,
     maxHit: result.maxHit,
     accuracy: result.accuracy,
     killTime: result.killTime,

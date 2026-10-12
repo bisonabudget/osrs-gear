@@ -14,7 +14,7 @@ import { EquipmentPiece, PlayerEquipment } from '@/types/Player';
 import { PlayerCombatStyle } from '@/types/PlayerCombatStyle';
 import { Spell, spells } from '@/types/Spell';
 import { emptyEquipment, Item, itemById, items, Slot, SLOTS, Way } from '../engine/data';
-import { Character, CombatClass, dpsOf, SetupInput } from '../engine/evaluate';
+import { Character, CombatClass, dpsOf, FightCache, SetupInput } from '../engine/evaluate';
 import type { Price } from '../prices';
 import { Protection, protectionFor } from '../protection';
 import { meets } from '../requirements';
@@ -161,6 +161,9 @@ export class Optimiser {
 
   private readonly evals = new Map<string, number>();
 
+  /** Shared with the page's figures, so the search and the results agree. */
+  readonly fightCache: FightCache = new Map();
+
   private readonly specialByName = new Map<string, Item>();
 
   // Items and the versions most players wear instead when they attack at least as well: fortified
@@ -266,7 +269,7 @@ export class Optimiser {
   }
 
   dps(setup: SetupInput): number {
-    return dpsOf(setup, this.monster, this.character);
+    return dpsOf(setup, this.monster, this.character, this.fightCache);
   }
 
   // ------------------------------------------------------------------ tasks

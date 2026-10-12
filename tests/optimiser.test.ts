@@ -67,9 +67,14 @@ describe('best setup', () => {
     }
   }, 600_000);
 
-  test('Vorkath picks a dragon-slaying crossbow with no limit', () => {
-    const setup = optimiserFor('Vorkath').optimise(Infinity, CLASSES)!;
+  test('Vorkath picks a dragon-slaying crossbow on a budget', () => {
+    const setup = optimiserFor('Vorkath').optimise(150e6, CLASSES)!;
     expect(setup.equipment.weapon?.name).toBe('Dragon hunter crossbow');
+  }, 120_000);
+
+  test('with no limit at Vorkath, the blowpipe beats ruby bolts, whose procs shrink as he loses HP', () => {
+    const setup = optimiserFor('Vorkath').optimise(Infinity, CLASSES)!;
+    expect(setup.equipment.weapon?.name).toBe('Toxic blowpipe');
   }, 120_000);
 });
 
@@ -181,9 +186,9 @@ describe('next upgrades', () => {
       expect(u.setup.dps).toBeCloseTo(setup.dps + u.gain, 9);
       if (i) expect(value(u)).toBeLessThanOrEqual(value(upgrades[i - 1]));
     });
-    // The crossbow costs more than the whole budget again, and adds the most for what it costs.
-    expect(upgrades[0].item.piece.name).toBe('Dragon hunter crossbow');
-    expect(upgrades[0].netCost).toBeGreaterThan(10e6);
+    // The blowpipe costs most of the budget again, and adds the most for what it costs.
+    expect(upgrades[0].item.piece.name).toBe('Toxic blowpipe');
+    expect(upgrades[0].netCost).toBeGreaterThan(5e6);
     expect(new Set(upgrades.map((u) => u.item.piece.name)).size).toBe(upgrades.length);
   }, 120_000);
 
