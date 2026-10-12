@@ -1,0 +1,29 @@
+--- a/src/lib/Equipment.ts
++++ b/src/lib/Equipment.ts
+@@ -198,15 +198,23 @@
+   return AmmoApplicability.INVALID;
+ };
+ 
++// Alias id -> canonical id, built on first use (osrs-gear patch: the original scanned every alias on each lookup).
++let canonicalIds: Map<number, number> | undefined;
++
+ /**
+  * Returns the canonical (base) item ID for a given item ID. This is useful if there are variants of each item.
+  * @param itemId
+  */
+ export const getCanonicalItemId = (itemId: number): number => {
+-  for (const [k, v] of Object.entries(equipmentAliases)) {
+-    if (v.includes(itemId)) return parseInt(k);
++  if (!canonicalIds) {
++    canonicalIds = new Map();
++    for (const [k, v] of Object.entries(equipmentAliases)) {
++      for (const alias of v) {
++        if (!canonicalIds.has(alias)) canonicalIds.set(alias, parseInt(k));
++      }
++    }
+   }
+-  return itemId;
++  return canonicalIds.get(itemId) ?? itemId;
+ };
+ 
+ export const getCanonicalItem = (equipmentPiece: EquipmentPiece): EquipmentPiece => {

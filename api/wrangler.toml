@@ -1,0 +1,15 @@
+# The Cloudflare Worker that fetches the hiscores for the site, since browsers can't read them
+# from another site. Free plan: 100,000 requests a day, and it is never billed.
+name = "osrs-gear-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+# The sites allowed to ask, comma-separated.
+ALLOWED_ORIGINS = "https://tristanbowdenfreeman-maker.github.io,http://localhost:5173"
+
+# Each visitor (by IP address) gets this many lookups a minute.
+[[ratelimits]]
+name = "LOOKUPS"
+namespace_id = "1001"
+simple = { limit = 10, period = 60 }
