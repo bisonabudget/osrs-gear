@@ -6,6 +6,7 @@ import { customMonster, emptyEquipment, itemById, monsterByKey, SLOTS } from '..
 import { assumedBoosts, evaluate, SetupInput } from '../engine/evaluate';
 import { Optimiser, Setup } from '../optimiser/optimise';
 import { fetchPrices, Price } from '../prices';
+import { inRaid, Raid } from '../toa';
 import type {
   CharacterInput, CustomMonster, Outcome, Reply, Request, Results, SetupRef, SetupView, SlotOption, Stats,
 } from './protocol';
@@ -16,11 +17,14 @@ let prices: Promise<Map<number, Price>> | null = null;
 const optimisers = new Map<string, Optimiser>();
 const KEEP = 4;
 
-const optimiserFor = async (monster: string, custom: CustomMonster | null, character: CharacterInput): Promise<Optimiser> => {
-  const key = `${monster}|${JSON.stringify(custom)}|${JSON.stringify(character)}`;
+const optimiserFor = async (
+  monster: string, custom: CustomMonster | null, raid: Raid, character: CharacterInput,
+): Promise<Optimiser> => {
+  const key = `${monster}|${JSON.stringify(custom)}|${raid.level}:${raid.path}|${JSON.stringify(character)}`;
   let o = optimisers.get(key);
   if (!o) {
-    const fight = custom ? customMonster(custom) : monsterByKey.get(monster)?.monster;
+    const base = monsterByKey.get(monster)?.monster;
+    const fight = custom ? customMonster(custom) : base && inRaid(base, raid);
     if (!fight) throw new Error(`Unknown monster ${monster}`);
     prices ??= fetchPrices();
     o = new Optimiser(fight, character, await prices.catch((e) => {
@@ -137,7 +141,7 @@ const outcome = (o: Optimiser, setup: Setup, request: Request): Outcome => ({
 let newest = 0;
 
 const handle = async (id: number, request: Request): Promise<Results[Request['kind']]> => {
-  const o = await optimiserFor(request.monster, request.custom, request.character);
+  const o = await optimiserFor(request.monster, request.custom, request.raid, request.character);
   if ((request.kind === 'best' || request.kind === 'evaluate') && id !== newest) throw new Error('Replaced by a newer search');
   switch (request.kind) {
     case 'best': {

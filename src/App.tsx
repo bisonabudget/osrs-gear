@@ -4,6 +4,7 @@ import { CUSTOM_KEY } from './custom';
 import type { Character } from './hiscores';
 import { eitherOf } from './format';
 import { protectionFor } from './protection';
+import { inToa, PATH_LEVEL_MAX, pathOf, RAID_LEVEL_MAX, raidHp } from './toa';
 import { wildernessOf } from './wilderness';
 import { useStored } from './storage';
 import { ask } from './worker/client';
@@ -17,6 +18,7 @@ import { MonsterPicker } from './ui/MonsterPicker';
 import { MonsterFacts, MonsterHead } from './ui/MonsterSheet';
 import { Panel } from './ui/Panel';
 import { Results } from './ui/Results';
+import { LevelBox } from './ui/LevelBox';
 import { RsnBox } from './ui/RsnBox';
 import { ThemeButton } from './ui/ThemeButton';
 import { Upgrades } from './ui/Upgrades';
@@ -48,6 +50,9 @@ export const App = () => {
   // Only the monsters where someone changed the on-task switch.
   const [taskChoices, setTaskChoices] = useStored<Record<string, boolean>>('onTask', {});
   const [wildernessChoices, setWildernessChoices] = useStored<Record<string, boolean>>('inWilderness', {});
+  const [storedRaidLevel, setRaidLevel] = useStored('raidLevel', 0);
+  // Each Tombs of Amascut path keeps its own level, as it does in a raid.
+  const [pathLevels, setPathLevels] = useStored<Record<string, number>>('pathLevels', {});
 
   // The one Custom monster, kept between visits whichever monster is picked.
   const [customMonster, setCustomMonster] = useStored<CustomMonster | null>('customMonster', null);
@@ -71,9 +76,19 @@ export const App = () => {
     [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness],
   );
   const customStats = isCustom ? customMonster : null;
+  // The raid and path level boxes only show for Tombs of Amascut monsters, and only they are scaled by them.
+  const toa = inToa(monster.key);
+  const path = pathOf(monster.key);
+  const raidLevel = toa ? storedRaidLevel : 0;
+  const pathLevel = path ? pathLevels[path] ?? 0 : 0;
+  const raid = useMemo(() => ({ level: raidLevel, path: pathLevel }), [raidLevel, pathLevel]);
+  const scaled = useMemo(
+    () => (toa ? { ...monster, skills: { ...monster.skills, hp: raidHp(monster.key, monster.skills.hp, raid) } } : monster),
+    [monster, toa, raid],
+  );
   const common = useMemo(
-    () => ({ monster: monster.key, custom: customStats, character, classes }),
-    [monster.key, customStats, character, classes],
+    () => ({ monster: monster.key, custom: customStats, raid, character, classes }),
+    [monster.key, customStats, raid, character, classes],
   );
 
   // A setup changed by hand stays only while everything else stays the same.
@@ -245,13 +260,35 @@ export const App = () => {
                   In the Wilderness
                 </label>
               )}
+              {toa && (
+                <LevelBox
+                  label="Raid level"
+                  icon="Raids icon"
+                  title="Each 5 raid levels make Tombs of Amascut monsters 2% harder to hit and give them 2% more hitpoints. Worked out for a solo raid."
+                  value={storedRaidLevel}
+                  max={RAID_LEVEL_MAX}
+                  step={5}
+                  onChange={setRaidLevel}
+                />
+              )}
+              {path && (
+                <LevelBox
+                  label={`${path} path level`}
+                  icon="Raids icon"
+                  title={`The Path of ${path}'s level, from 0 to 6. Level 1 gives its boss 8% more hitpoints, and each level after adds 5%.`}
+                  value={pathLevel}
+                  max={PATH_LEVEL_MAX}
+                  step={1}
+                  onChange={(level) => setPathLevels({ ...pathLevels, [path]: level })}
+                />
+              )}
             </div>
           </div>
           {isCustom ? (
             <CustomEditor custom={customMonster} onChange={setCustomMonster} onCopy={(m) => setCustomMonster(copyOf(m))} />
           ) : (
             <MonsterFacts
-              monster={monster}
+              monster={scaled}
               stats={current?.stats ?? null}
               spell={current?.setup.spell ?? null}
             />

@@ -3,6 +3,7 @@
 import type { Slot } from '../engine/data';
 import type { CombatClass } from '../engine/evaluate';
 import type { Use } from '../optimiser/supplies';
+import type { Raid } from '../toa';
 
 export type { Slot, CombatClass, Use };
 
@@ -149,6 +150,8 @@ interface Common {
   monster: string;
   /** Set when the monster is the Custom monster. */
   custom: CustomMonster | null;
+  /** The Tombs of Amascut raid and path levels, used only on its monsters. */
+  raid: Raid;
   character: CharacterInput;
   classes: CombatClass[];
 }
