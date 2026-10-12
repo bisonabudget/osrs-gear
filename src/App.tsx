@@ -4,7 +4,7 @@ import { CUSTOM_KEY } from './custom';
 import type { Character } from './hiscores';
 import { eitherOf } from './format';
 import { protectionFor } from './protection';
-import { inWilderness as onlyInWilderness } from './wilderness';
+import { wildernessOf } from './wilderness';
 import { useStored } from './storage';
 import { ask } from './worker/client';
 import type {
@@ -63,7 +63,9 @@ export const App = () => {
   // A Custom monster starts on task when the monster it was copied from does.
   const taskDefault = isCustom ? monsterInfo.get(customMonster.from)! : monster;
   const onTask = taskChoices[monster.key] ?? (taskDefault.slayer && !taskDefault.boss);
-  const inWilderness = wildernessChoices[monster.key] ?? onlyInWilderness(taskDefault.name);
+  // The Wilderness switch only shows for monsters fought both in and out of it.
+  const wilderness = wildernessOf(taskDefault.name);
+  const inWilderness = wilderness === 'always' || (wilderness === 'sometimes' && (wildernessChoices[monster.key] ?? false));
   const character: CharacterInput = useMemo(
     () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness }),
     [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness],
@@ -231,16 +233,18 @@ export const App = () => {
                 <img src={wikiImage('Slayer icon')} alt="" />
                 On a slayer task
               </label>
-              <label className="switch" title="Craw's bow, Viggora's chainmace, Thammaron's sceptre and their upgrades only get their bonus in the Wilderness.">
-                <input
-                  type="checkbox"
-                  checked={inWilderness}
-                  onChange={(e) => setWildernessChoices({ ...wildernessChoices, [monster.key]: e.target.checked })}
-                />
-                <span className="switch-track" aria-hidden="true" />
-                <img src={wikiImage('Skull (status) icon')} alt="" />
-                In the Wilderness
-              </label>
+              {wilderness === 'sometimes' && (
+                <label className="switch" title="Craw's bow, Viggora's chainmace, Thammaron's sceptre and their upgrades only get their bonus in the Wilderness.">
+                  <input
+                    type="checkbox"
+                    checked={inWilderness}
+                    onChange={(e) => setWildernessChoices({ ...wildernessChoices, [monster.key]: e.target.checked })}
+                  />
+                  <span className="switch-track" aria-hidden="true" />
+                  <img src={wikiImage('Skull (status) icon')} alt="" />
+                  In the Wilderness
+                </label>
+              )}
             </div>
           </div>
           {isCustom ? (
