@@ -3,6 +3,7 @@
 import type { Slot } from '../engine/data';
 import type { CombatClass } from '../engine/evaluate';
 import type { Use } from '../optimiser/supplies';
+import type { Drains } from '../drains';
 import type { Raid } from '../toa';
 
 export type { Slot, CombatClass, Use };
@@ -98,6 +99,8 @@ export interface Stats {
   /** The spell's element, if it has one. */
   element: Element | null;
   details: { label: string, value: string, highlight: boolean }[];
+  /** The monster as fought, after raid scaling and drains. */
+  foe: { skills: { hp: number, atk: number, str: number, def: number, magic: number, ranged: number }, magicDefence: number };
 }
 
 export interface UpgradeView {
@@ -152,6 +155,7 @@ interface Common {
   custom: CustomMonster | null;
   /** The Tombs of Amascut raid and path levels, used only on its monsters. */
   raid: Raid;
+  drains: Drains;
   character: CharacterInput;
   classes: CombatClass[];
 }

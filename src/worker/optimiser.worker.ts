@@ -7,6 +7,9 @@ import { assumedBoosts, evaluate, SetupInput } from '../engine/evaluate';
 import { Optimiser, Setup } from '../optimiser/optimise';
 import { fetchPrices, Price } from '../prices';
 import { inRaid, Raid } from '../toa';
+import type { Drains } from '../drains';
+import { withDrains } from '../engine/drains';
+import { scaleMonster } from '@/lib/MonsterScaling';
 import type {
   CharacterInput, CustomMonster, Outcome, Reply, Request, Results, SetupRef, SetupView, SlotOption, Stats,
 } from './protocol';
@@ -18,14 +21,15 @@ const optimisers = new Map<string, Optimiser>();
 const KEEP = 4;
 
 const optimiserFor = async (
-  monster: string, custom: CustomMonster | null, raid: Raid, character: CharacterInput,
+  monster: string, custom: CustomMonster | null, raid: Raid, drains: Drains, character: CharacterInput,
 ): Promise<Optimiser> => {
-  const key = `${monster}|${JSON.stringify(custom)}|${raid.level}:${raid.path}|${JSON.stringify(character)}`;
+  const key = `${monster}|${JSON.stringify(custom)}|${raid.level}:${raid.path}|${JSON.stringify(drains)}|${JSON.stringify(character)}`;
   let o = optimisers.get(key);
   if (!o) {
     const base = monsterByKey.get(monster)?.monster;
-    const fight = custom ? customMonster(custom) : base && inRaid(base, raid);
-    if (!fight) throw new Error(`Unknown monster ${monster}`);
+    const raided = custom ? customMonster(custom) : base && inRaid(base, raid);
+    if (!raided) throw new Error(`Unknown monster ${monster}`);
+    const fight = withDrains(raided, drains);
     prices ??= fetchPrices();
     o = new Optimiser(fight, character, await prices.catch((e) => {
       prices = null;
@@ -110,6 +114,15 @@ const againstOf = (setup: Setup): Stats['against'] => {
   }
 };
 
+// The monster as the DPS calculator fights it, scaled by the raid and drained.
+const foeOf = (o: Optimiser): Stats['foe'] => {
+  const { skills, defensive } = scaleMonster(o.monster);
+  return {
+    skills: { hp: skills.hp, atk: skills.atk, str: skills.str, def: skills.def, magic: skills.magic, ranged: skills.ranged },
+    magicDefence: defensive.magic,
+  };
+};
+
 const statsOf = (o: Optimiser, setup: Setup): Stats => {
   const result = evaluate(setup, o.monster, o.character, true);
   const { offensive, defensive, bonuses } = result.player;
@@ -126,6 +139,7 @@ const statsOf = (o: Optimiser, setup: Setup): Stats => {
     against: againstOf(setup),
     element: setup.spell?.element ?? null,
     details: result.details,
+    foe: foeOf(o),
   };
 };
 
@@ -141,7 +155,7 @@ const outcome = (o: Optimiser, setup: Setup, request: Request): Outcome => ({
 let newest = 0;
 
 const handle = async (id: number, request: Request): Promise<Results[Request['kind']]> => {
-  const o = await optimiserFor(request.monster, request.custom, request.raid, request.character);
+  const o = await optimiserFor(request.monster, request.custom, request.raid, request.drains, request.character);
   if ((request.kind === 'best' || request.kind === 'evaluate') && id !== newest) throw new Error('Replaced by a newer search');
   switch (request.kind) {
     case 'best': {

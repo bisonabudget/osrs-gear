@@ -462,6 +462,26 @@ p { margin: 0; }
 .level-box img { width: 18px; height: 18px; object-fit: contain; }
 .level-box .stat-input { width: 56px; }
 
+.drains { margin: 0 0 14px; }
+.drains summary { font-size: 13px; }
+.drains-summary { font-weight: 400; color: var(--muted); }
+.drains-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px 20px; }
+.drains-grid .level-box { font-size: 13px; }
+.drains-grid .level-box .stat-input { margin-left: auto; }
+.drains-grid select.stat-input { width: auto; max-width: 120px; }
+.drains-clear {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.drains-clear:hover { color: var(--ink); }
+
 .sr-only {
   position: absolute;
   width: 1px;

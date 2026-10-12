@@ -5,6 +5,8 @@ import type { Character } from './hiscores';
 import { eitherOf } from './format';
 import { protectionFor } from './protection';
 import { inToa, PATH_LEVEL_MAX, pathOf, RAID_LEVEL_MAX, raidHp } from './toa';
+import { NO_DRAINS } from './drains';
+import type { Drains } from './drains';
 import { wildernessOf } from './wilderness';
 import { useStored } from './storage';
 import { ask } from './worker/client';
@@ -18,6 +20,7 @@ import { MonsterPicker } from './ui/MonsterPicker';
 import { MonsterFacts, MonsterHead } from './ui/MonsterSheet';
 import { Panel } from './ui/Panel';
 import { Results } from './ui/Results';
+import { DrainsPanel } from './ui/DrainsPanel';
 import { LevelBox } from './ui/LevelBox';
 import { RsnBox } from './ui/RsnBox';
 import { ThemeButton } from './ui/ThemeButton';
@@ -53,6 +56,8 @@ export const App = () => {
   const [storedRaidLevel, setRaidLevel] = useStored('raidLevel', 0);
   // Each Tombs of Amascut path keeps its own level, as it does in a raid.
   const [pathLevels, setPathLevels] = useStored<Record<string, number>>('pathLevels', {});
+  // Only the monsters with Defence drains set.
+  const [drainChoices, setDrainChoices] = useStored<Record<string, Drains>>('drains', {});
 
   // The one Custom monster, kept between visits whichever monster is picked.
   const [customMonster, setCustomMonster] = useStored<CustomMonster | null>('customMonster', null);
@@ -86,9 +91,14 @@ export const App = () => {
     () => (toa ? { ...monster, skills: { ...monster.skills, hp: raidHp(monster.key, monster.skills.hp, raid) } } : monster),
     [monster, toa, raid],
   );
+  const drains = drainChoices[monster.key] ?? NO_DRAINS;
+  const setDrains = (d: Drains) => {
+    const { [monster.key]: _, ...others } = drainChoices;
+    setDrainChoices(d === NO_DRAINS ? others : { ...others, [monster.key]: d });
+  };
   const common = useMemo(
-    () => ({ monster: monster.key, custom: customStats, raid, character, classes }),
-    [monster.key, customStats, raid, character, classes],
+    () => ({ monster: monster.key, custom: customStats, raid, drains, character, classes }),
+    [monster.key, customStats, raid, drains, character, classes],
   );
 
   // A setup changed by hand stays only while everything else stays the same.
@@ -142,6 +152,11 @@ export const App = () => {
     else setEdited({ inputs, setup: upgrade.setup });
   };
   const current = outcome && !nothing && outcomeFor === monster.key ? outcome : null;
+  // The monster's stats as the setup on show fights them, after raid scaling and drains.
+  const foeStats = current?.stats.foe;
+  const foe = foeStats
+    ? { ...scaled, skills: { ...scaled.skills, ...foeStats.skills }, defence: { ...scaled.defence, magic: foeStats.magicDefence } }
+    : scaled;
 
   // A setup kept for a Comparison, worked out again against whatever is picked now.
   const [kept, setKept] = useStored<SetupRef | null>('kept', null);
@@ -283,12 +298,13 @@ export const App = () => {
                 />
               )}
             </div>
+            <DrainsPanel drains={drains} onChange={setDrains} />
           </div>
           {isCustom ? (
             <CustomEditor custom={customMonster} onChange={setCustomMonster} onCopy={(m) => setCustomMonster(copyOf(m))} />
           ) : (
             <MonsterFacts
-              monster={scaled}
+              monster={foe}
               stats={current?.stats ?? null}
               spell={current?.setup.spell ?? null}
             />
