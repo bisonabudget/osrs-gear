@@ -455,7 +455,8 @@ p { margin: 0; }
 .stat-group li.weakness.used .stat-value { color: var(--accent); }
 .statbox .note { margin: 8px 0 10px; }
 
-.task { margin: 2px 0 12px; }
+.task { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 16px 0 12px; }
+.task .switch { margin: 0; }
 
 .sr-only {
   position: absolute;

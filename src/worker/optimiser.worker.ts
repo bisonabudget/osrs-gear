@@ -110,7 +110,7 @@ const statsOf = (o: Optimiser, setup: Setup): Stats => {
     offensive,
     defensive: { stab: defensive.stab, slash: defensive.slash, crush: defensive.crush, magic: defensive.magic, ranged: defensive.ranged },
     strength: { melee: bonuses.str, ranged: bonuses.ranged_str, magic: bonuses.magic_str, prayer: bonuses.prayer },
-    ...assumedBoosts(classOf(setup.style), o.character),
+    ...assumedBoosts(classOf(setup.style), o.character, setup.spell),
     against: againstOf(setup),
     element: setup.spell?.element ?? null,
     details: result.details,

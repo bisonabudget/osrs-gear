@@ -20,7 +20,7 @@ const CLIMBS = FULL ? 4 : 1;
 const optimiserFor = (name: string, skills = MAXED) => {
   const m = monsters.find((x) => x.name === name);
   if (!m) throw new Error(`No monster called ${name}`);
-  return new Optimiser(m.monster, { skills, onTask: m.slayer && !m.boss, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false }, prices);
+  return new Optimiser(m.monster, { skills, onTask: m.slayer && !m.boss, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false, inWilderness: false }, prices);
 };
 
 const describeSetup = (s: Setup) => `${SLOTS.map((slot) => s.equipment[slot]?.name).filter(Boolean).join(', ')} | ${s.style.name}${s.spell ? ` | ${s.spell.name}` : ''} | ${s.dps.toFixed(4)} DPS, ${Math.round(s.cost)} GP`;

@@ -8,7 +8,7 @@ import fixture from './fixtures/prices.json';
 
 const prices = pickPrices(fixture.latest as never, fixture.hour as never, fixture.hourTime, fixture.now);
 const skills = { atk: 99, def: 99, hp: 99, magic: 99, prayer: 99, ranged: 99, str: 99, agility: 99, slayer: 99, mining: 99, herblore: 99 };
-const character = { skills, onTask: false, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false };
+const character = { skills, onTask: false, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false, inWilderness: false };
 const info = (name: string) => monsterList.find((m) => m.name === name)!;
 const fight = (name: string) => monsters.find((m) => m.name === name)!.monster;
 

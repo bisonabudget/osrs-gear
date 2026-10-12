@@ -25,6 +25,8 @@ export interface Character {
   kandarinDiary: boolean;
   /** Charge is cast, so god spells hit harder with the matching god cape. */
   chargeSpell: boolean;
+  /** Fighting in the Wilderness, where the Wilderness weapons get their bonus. */
+  inWilderness: boolean;
 }
 
 export interface SetupInput {
@@ -61,14 +63,18 @@ const potionFor = (cls: CombatClass, character: Character): Potion => {
   return character.untradeables ? Potion.SATURATED_HEART : Potion.MAGIC;
 };
 
-/** The names of the prayers and potion assumed for a class. */
-export const assumedBoosts = (cls: CombatClass, character: Character) => ({
+// Mark of Darkness is on the Arceuus spellbook from 59 Magic and boosts the demonbane spells.
+const usesMark = (spell: Spell | null, { magic }: Skills) => !!spell?.name.includes('Demonbane') && magic >= 59;
+
+/** The names of the prayers, potion and other boosts assumed for a class. */
+export const assumedBoosts = (cls: CombatClass, character: Character, spell: Spell | null = null) => ({
   prayers: prayersFor(cls, character.skills).map((p) => PrayerMap[p].name),
   potion: PotionMap[potionFor(cls, character)].name,
   // Only the ones that can change this class's DPS.
   effects: [
     ...(cls === 'ranged' && character.kandarinDiary ? ['the Kandarin hard diary'] : []),
     ...(cls === 'magic' && character.chargeSpell ? ['Charge'] : []),
+    ...(cls === 'magic' && usesMark(spell, character.skills) ? ['Mark of Darkness'] : []),
   ],
 });
 
@@ -100,6 +106,7 @@ export const buildPlayer = (setup: SetupInput, monster: Monster, character: Char
   };
   player.buffs = {
     ...player.buffs, potions: [potion], onSlayerTask: character.onTask, kandarinDiary: character.kandarinDiary, chargeSpell: character.chargeSpell,
+    inWilderness: character.inWilderness, markOfDarknessSpell: usesMark(setup.spell, character.skills),
   };
   const totals = calculateEquipmentBonusesFromGear(player, monster);
   player.bonuses = totals.bonuses;

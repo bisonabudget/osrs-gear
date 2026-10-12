@@ -4,6 +4,7 @@ import { CUSTOM_KEY } from './custom';
 import type { Character } from './hiscores';
 import { eitherOf } from './format';
 import { protectionFor } from './protection';
+import { inWilderness as onlyInWilderness } from './wilderness';
 import { useStored } from './storage';
 import { ask } from './worker/client';
 import type {
@@ -46,6 +47,7 @@ export const App = () => {
   const [chargeSpell, setChargeSpell] = useStored('chargeSpell', false);
   // Only the monsters where someone changed the on-task switch.
   const [taskChoices, setTaskChoices] = useStored<Record<string, boolean>>('onTask', {});
+  const [wildernessChoices, setWildernessChoices] = useStored<Record<string, boolean>>('inWilderness', {});
 
   // The one Custom monster, kept between visits whichever monster is picked.
   const [customMonster, setCustomMonster] = useStored<CustomMonster | null>('customMonster', null);
@@ -61,9 +63,10 @@ export const App = () => {
   // A Custom monster starts on task when the monster it was copied from does.
   const taskDefault = isCustom ? monsterInfo.get(customMonster.from)! : monster;
   const onTask = taskChoices[monster.key] ?? (taskDefault.slayer && !taskDefault.boss);
+  const inWilderness = wildernessChoices[monster.key] ?? onlyInWilderness(taskDefault.name);
   const character: CharacterInput = useMemo(
-    () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell }),
-    [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell],
+    () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness }),
+    [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness],
   );
   const customStats = isCustom ? customMonster : null;
   const common = useMemo(
@@ -217,16 +220,28 @@ export const App = () => {
               customNote={savedFrom ? `Your saved one, copied from ${savedFrom}` : `Starts as a copy of ${monster.name}`}
             />
             <MonsterHead monster={monster} copiedFrom={copiedFrom} />
-            <label className="switch task">
-              <input
-                type="checkbox"
-                checked={onTask}
-                onChange={(e) => setTaskChoices({ ...taskChoices, [monster.key]: e.target.checked })}
-              />
-              <span className="switch-track" aria-hidden="true" />
-              <img src={wikiImage('Slayer icon')} alt="" />
-              On a slayer task
-            </label>
+            <div className="task">
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={onTask}
+                  onChange={(e) => setTaskChoices({ ...taskChoices, [monster.key]: e.target.checked })}
+                />
+                <span className="switch-track" aria-hidden="true" />
+                <img src={wikiImage('Slayer icon')} alt="" />
+                On a slayer task
+              </label>
+              <label className="switch" title="Craw's bow, Viggora's chainmace, Thammaron's sceptre and their upgrades only get their bonus in the Wilderness.">
+                <input
+                  type="checkbox"
+                  checked={inWilderness}
+                  onChange={(e) => setWildernessChoices({ ...wildernessChoices, [monster.key]: e.target.checked })}
+                />
+                <span className="switch-track" aria-hidden="true" />
+                <img src={wikiImage('Skull (status) icon')} alt="" />
+                In the Wilderness
+              </label>
+            </div>
           </div>
           {isCustom ? (
             <CustomEditor custom={customMonster} onChange={setCustomMonster} onCopy={(m) => setCustomMonster(copyOf(m))} />

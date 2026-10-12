@@ -32,6 +32,7 @@ export interface CharacterInput {
   unlockedOnly: boolean;
   kandarinDiary: boolean;
   chargeSpell: boolean;
+  inWilderness: boolean;
 }
 
 export interface StyleRef {

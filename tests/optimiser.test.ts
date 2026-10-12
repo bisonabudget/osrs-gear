@@ -14,7 +14,7 @@ const CLASSES: CombatClass[] = ['melee', 'ranged', 'magic'];
 const optimiserFor = (name: string, untradeables = true) => {
   const m = monsters.find((x) => x.name === name);
   if (!m) throw new Error(`No monster called ${name}`);
-  return new Optimiser(m.monster, { skills, onTask: m.slayer && !m.boss, untradeables, unlockedOnly: true, kandarinDiary: true, chargeSpell: false }, prices);
+  return new Optimiser(m.monster, { skills, onTask: m.slayer && !m.boss, untradeables, unlockedOnly: true, kandarinDiary: true, chargeSpell: false, inWilderness: false }, prices);
 };
 
 const worn = (setup: Setup) => SLOTS.flatMap((s) => (setup.equipment[s] ? [itemById.get(setup.equipment[s]!.id)!] : []));
@@ -102,7 +102,7 @@ describe('only gear I can use', () => {
   const graardor = monsters.find((x) => x.name === 'General Graardor')!;
   const at = (levels: Partial<typeof skills>, unlockedOnly = true) => new Optimiser(
     graardor.monster,
-    { skills: { ...skills, ...levels }, onTask: false, untradeables: true, unlockedOnly, kandarinDiary: true, chargeSpell: false },
+    { skills: { ...skills, ...levels }, onTask: false, untradeables: true, unlockedOnly, kandarinDiary: true, chargeSpell: false, inWilderness: false },
     prices,
   );
   const weapons = (o: Optimiser) => o.slotItems.get('weapon')!.map(({ item }) => item.piece.name);
@@ -275,7 +275,7 @@ describe('untradeable costs', () => {
 
 describe('elemental weakness', () => {
   const vorkath = monsters.find((x) => x.name === 'Vorkath')!;
-  const character = { skills, onTask: false, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false };
+  const character = { skills, onTask: false, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false, inWilderness: false };
 
   test('a monster weak to fire is fought with a fire spell', () => {
     expect(vorkath.monster.weakness?.element).toBe('fire');
@@ -320,7 +320,7 @@ describe('protection', () => {
 
   test('there is no setup when the levels allow none of the items', () => {
     const m = monsters.find((x) => x.name === 'Basilisk Knight')!;
-    const optimiser = new Optimiser(m.monster, { skills: { ...skills, slayer: 20 }, onTask: true, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false }, prices);
+    const optimiser = new Optimiser(m.monster, { skills: { ...skills, slayer: 20 }, onTask: true, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false, inWilderness: false }, prices);
     expect(optimiser.optimise(Infinity, CLASSES)).toBeNull();
   }, 60_000);
 });
