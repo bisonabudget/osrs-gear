@@ -108,6 +108,7 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Pr
           <div className="osrs-note">
             <p className="osrs-title">Quests</p>
             <p>Quests and diaries aren't checked yet, so gear that needs one counts as unlocked.</p>
+            <p>Use the Kandarin diary switch to say whether you've done the hard diary, as it changes enchanted bolt DPS.</p>
           </div>
         )}
         {tab === 'prayer' && outcome && (
@@ -118,6 +119,7 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Pr
               : <p>No combat prayer at this Prayer level.</p>}
             <div className="boost"><img src={wikiImage(POTION_IMAGES[outcome.stats.potion] ?? outcome.stats.potion)} alt="" />{outcome.stats.potion}</div>
             <p className="osrs-small">The best prayer your Prayer and Defence levels allow and the best potion for the style are assumed.</p>
+            {outcome.stats.effects.length > 0 && <p className="osrs-small">Also counting {listOf(outcome.stats.effects)}.</p>}
           </div>
         )}
         {tab === 'magic' && outcome && (

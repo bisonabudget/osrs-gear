@@ -21,6 +21,10 @@ export interface Character {
   untradeables: boolean;
   /** Leave out items whose Requirements the levels don't meet. */
   unlockedOnly: boolean;
+  /** Enchanted bolts trigger their effects 10% more often with the Kandarin hard diary done. */
+  kandarinDiary: boolean;
+  /** Charge is cast, so god spells hit harder with the matching god cape. */
+  chargeSpell: boolean;
 }
 
 export interface SetupInput {
@@ -61,6 +65,11 @@ const potionFor = (cls: CombatClass, character: Character): Potion => {
 export const assumedBoosts = (cls: CombatClass, character: Character) => ({
   prayers: prayersFor(cls, character.skills).map((p) => PrayerMap[p].name),
   potion: PotionMap[potionFor(cls, character)].name,
+  // Only the ones that can change this class's DPS.
+  effects: [
+    ...(cls === 'ranged' && character.kandarinDiary ? ['the Kandarin hard diary'] : []),
+    ...(cls === 'magic' && character.chargeSpell ? ['Charge'] : []),
+  ],
 });
 
 // Issues that mean the Setup can't be used against this Monster.
@@ -89,7 +98,9 @@ export const buildPlayer = (setup: SetupInput, monster: Monster, character: Char
     spell: setup.spell,
     prayers: prayersFor(cls, character.skills),
   };
-  player.buffs = { ...player.buffs, potions: [potion], onSlayerTask: character.onTask };
+  player.buffs = {
+    ...player.buffs, potions: [potion], onSlayerTask: character.onTask, kandarinDiary: character.kandarinDiary, chargeSpell: character.chargeSpell,
+  };
   const totals = calculateEquipmentBonusesFromGear(player, monster);
   player.bonuses = totals.bonuses;
   player.offensive = totals.offensive;

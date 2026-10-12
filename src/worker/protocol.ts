@@ -30,6 +30,8 @@ export interface CharacterInput {
   untradeables: boolean;
   /** Leave out items whose Requirements the levels don't meet. */
   unlockedOnly: boolean;
+  kandarinDiary: boolean;
+  chargeSpell: boolean;
 }
 
 export interface StyleRef {
@@ -85,6 +87,8 @@ export interface Stats {
   /** The best prayers the Prayer and Defence levels allow, or none. */
   prayers: string[];
   potion: string;
+  /** Diaries and spells assumed that change this DPS, like the Kandarin hard diary. */
+  effects: string[];
   /** The monster defence the attack rolls against (a salamander rolls against all three ranged ones). */
   against: Defence | 'mixed' | null;
   /** The spell's element, if it has one. */

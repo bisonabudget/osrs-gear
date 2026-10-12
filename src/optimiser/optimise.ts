@@ -36,6 +36,9 @@ const TASK_SLACK = 1.1;
 // Upgrades adding less than this share of the current DPS only show when there aren't enough bigger ones.
 const MIN_GAIN = 0.01;
 
+// Spells Charge boosts when the matching god cape is worn.
+const GOD_SPELLS = new Set(['Saradomin Strike', 'Claws of Guthix', 'Flames of Zamorak']);
+
 const setupKey = ({ equipment, style, spell }: SetupInput) => [
   ...SLOTS.map((s) => equipment[s]?.id ?? ''), equipment.weapon?.itemVars?.blowpipeDartId ?? '', style.name, style.type, spell?.name ?? '',
 ].join('|');
@@ -287,6 +290,7 @@ export class Optimiser {
   /**
    * The spells worth trying with a weapon: ones the Magic level allows and the weapon can
    * autocast, leaving out any that another beats on both DPS and rune cost with the weapon alone.
+   * With Charge cast, god spells only gain with their god cape, so they're always kept.
    */
   private spellsFor(weapon: EquipmentPiece, style: PlayerCombatStyle): Spell[] {
     const key = `${weapon.name}|${style.stance}`;
@@ -304,6 +308,10 @@ export class Optimiser {
       ranked = [];
       let cheapest = Infinity;
       for (const s of scored) {
+        if (this.character.chargeSpell && GOD_SPELLS.has(s.spell.name)) {
+          ranked.push(s.spell);
+          continue;
+        }
         if (s.cost >= cheapest) continue;
         ranked.push(s.spell);
         cheapest = s.cost;

@@ -42,6 +42,8 @@ export const App = () => {
   const [rsn, setRsn] = useStored<Omit<Character, 'skills'> | null>('rsn', null);
   const [untradeables, setUntradeables] = useStored('untradeables', true);
   const [unlockedOnly, setUnlockedOnly] = useStored('unlockedOnly', true);
+  const [kandarinDiary, setKandarinDiary] = useStored('kandarinDiary', true);
+  const [chargeSpell, setChargeSpell] = useStored('chargeSpell', false);
   // Only the monsters where someone changed the on-task switch.
   const [taskChoices, setTaskChoices] = useStored<Record<string, boolean>>('onTask', {});
 
@@ -60,8 +62,8 @@ export const App = () => {
   const taskDefault = isCustom ? monsterInfo.get(customMonster.from)! : monster;
   const onTask = taskChoices[monster.key] ?? (taskDefault.slayer && !taskDefault.boss);
   const character: CharacterInput = useMemo(
-    () => ({ skills, onTask, untradeables, unlockedOnly }),
-    [skills, onTask, untradeables, unlockedOnly],
+    () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell }),
+    [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell],
   );
   const customStats = isCustom ? customMonster : null;
   const common = useMemo(
@@ -158,11 +160,23 @@ export const App = () => {
           </button>
         ))}
       </div>
-      <label className="switch" title="Untradeables earned in game, like a fire cape or defenders, count as free. Turn off to use only gear you can buy.">
-        <input type="checkbox" checked={untradeables} onChange={(e) => setUntradeables(e.target.checked)} />
-        <span className="switch-track" aria-hidden="true" />
-        Untradeables
-      </label>
+      <div className="switches">
+        <label className="switch" title="Untradeables earned in game, like a fire cape or defenders, count as free. Turn off to use only gear you can buy.">
+          <input type="checkbox" checked={untradeables} onChange={(e) => setUntradeables(e.target.checked)} />
+          <span className="switch-track" aria-hidden="true" />
+          Untradeables
+        </label>
+        <label className="switch" title="Enchanted bolts trigger their effects 10% more often with the Kandarin hard diary done.">
+          <input type="checkbox" checked={kandarinDiary} onChange={(e) => setKandarinDiary(e.target.checked)} />
+          <span className="switch-track" aria-hidden="true" />
+          Kandarin diary
+        </label>
+        <label className="switch" title="With Charge cast, god spells hit up to 30 instead of 20 when wearing the matching god cape.">
+          <input type="checkbox" checked={chargeSpell} onChange={(e) => setChargeSpell(e.target.checked)} />
+          <span className="switch-track" aria-hidden="true" />
+          Charge
+        </label>
+      </div>
     </div>
   );
 

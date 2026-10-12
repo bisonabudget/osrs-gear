@@ -519,6 +519,8 @@ p { margin: 0; }
 
 .controls .switch { margin: 0; }
 
+.switches { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .chip {

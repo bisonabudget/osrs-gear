@@ -150,8 +150,8 @@ const Maths = ({ outcome: { stats } }: Part) => (
     <summary>Show the maths</summary>
     <p className="note">
       Worked out by the OSRS Wiki's DPS calculator with {stats.prayers.length
-        ? `${listOf([...stats.prayers, stats.potion.toLowerCase()])} active.`
-        : `${stats.potion.toLowerCase()} active and no prayer.`}
+        ? `${listOf([...stats.prayers, stats.potion.toLowerCase(), ...stats.effects])} active.`
+        : `${listOf([stats.potion.toLowerCase(), ...stats.effects])} active and no prayer.`}
     </p>
     <dl>
       {stats.details.map((d, i) => (
