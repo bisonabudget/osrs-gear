@@ -8,10 +8,11 @@ import { Coins } from './Coins';
 
 type Tab = 'combat' | 'skills' | 'quests' | 'gear' | 'prayer' | 'magic';
 
-const TABS: { id: Tab, label: string, icon: string }[] = [
+// Quests stays hidden until quest and diary unlocks are checked. Set hidden to false to bring it back.
+const TABS: { id: Tab, label: string, icon: string, hidden?: boolean }[] = [
   { id: 'combat', label: 'Combat', icon: 'Combat icon' },
   { id: 'skills', label: 'Skills', icon: 'Stats icon' },
-  { id: 'quests', label: 'Quests', icon: 'Quest list icon' },
+  { id: 'quests', label: 'Quests', icon: 'Quest list icon', hidden: true },
   { id: 'gear', label: 'Gear', icon: 'Worn Equipment' },
   { id: 'prayer', label: 'Prayer', icon: 'Prayer icon' },
   { id: 'magic', label: 'Magic', icon: 'Magic icon' },
@@ -73,7 +74,7 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Pr
   return (
     <div className="osrs">
       <div className="osrs-tabs" role="tablist">
-        {TABS.map((t) => (
+        {TABS.filter((t) => !t.hidden).map((t) => (
           <button
             key={t.id}
             type="button"
