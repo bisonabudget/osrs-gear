@@ -35,16 +35,19 @@ export interface Raid {
   path: number;
 }
 
-const scale = (m: Monster, raid: Raid) => applyToaScaling({
-  ...m,
-  inputs: { ...m.inputs, toaInvocationLevel: raid.level, toaPathLevel: raid.path, partySize: 1 },
-});
+const raidInputs = (m: Monster, raid: Raid): Monster['inputs'] => (
+  { ...m.inputs, toaInvocationLevel: raid.level, toaPathLevel: raid.path, partySize: 1 });
 
-/** The engine's monster in a raid, with its hitpoints raised and starting full. */
+const scale = (m: Monster, raid: Raid) => applyToaScaling({ ...m, inputs: raidInputs(m, raid) });
+
+/**
+ * The engine's monster in a raid. Only its settings change: the DPS calculator scales the monster
+ * from them itself, so raising its hitpoints here too would count them twice. It starts on full
+ * hitpoints.
+ */
 export const inRaid = (m: Monster, raid: Raid): Monster => {
   if ((raid.level === 0 && raid.path === 0) || !TOMBS_OF_AMASCUT_MONSTER_IDS.includes(m.id)) return m;
-  const scaled = scale(m, raid);
-  return { ...scaled, inputs: { ...scaled.inputs, monsterCurrentHp: scaled.skills.hp } };
+  return { ...m, inputs: { ...raidInputs(m, raid), monsterCurrentHp: scale(m, raid).skills.hp } };
 };
 
 /** A ToA monster's hitpoints in a raid, for the page. */

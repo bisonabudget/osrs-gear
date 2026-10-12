@@ -1,8 +1,9 @@
 // The Tombs of Amascut raid and path levels scale its monsters, and only them.
 import { expect, test } from 'vitest';
 import { emptyEquipment, items, monsters } from '../src/engine/data';
-import { dpsOf, evaluate } from '../src/engine/evaluate';
+import { buildPlayer, dpsOf, evaluate } from '../src/engine/evaluate';
 import { inRaid, inToa, pathOf, raidHp } from '../src/toa';
+import PlayerVsNPCCalc from '@/lib/PlayerVsNPCCalc';
 import { getCombatStylesForCategory } from '@/utils';
 
 const skills = { atk: 99, def: 99, hp: 99, magic: 99, prayer: 99, ranged: 99, str: 99, agility: 99, slayer: 99, mining: 99, herblore: 99 };
@@ -11,10 +12,12 @@ const weapon = items.find((i) => i.piece.name === 'Abyssal whip')!.piece;
 const setup = { equipment: { ...emptyEquipment(), weapon }, style: getCombatStylesForCategory(weapon.category)[1], spell: null };
 const zebak = monsters.find((m) => m.name === 'Zebak')!;
 const vorkath = monsters.find((m) => m.name === 'Vorkath')!;
+// The hitpoints the DPS calculator fights, after it has scaled the monster itself.
+const hpInCalc = (m: typeof zebak.monster) => (new PlayerVsNPCCalc(buildPlayer(setup, m, character), m, { loadoutName: 'x' }) as unknown as { monster: typeof m }).monster.skills.hp;
 
 test('a higher raid level makes a ToA boss harder to hit and slower to kill', () => {
   const raised = inRaid(zebak.monster, { level: 300, path: 0 });
-  expect(raised.skills.hp).toBe(1280);
+  expect(hpInCalc(raised)).toBe(1280);
   expect(raised.inputs.monsterCurrentHp).toBe(1280);
   expect(dpsOf(setup, raised, character)).toBeLessThan(dpsOf(setup, zebak.monster, character));
   expect(evaluate(setup, raised, character).killTime).toBeGreaterThan(evaluate(setup, zebak.monster, character).killTime);
@@ -22,13 +25,13 @@ test('a higher raid level makes a ToA boss harder to hit and slower to kill', ()
 
 test('the page shows the same hitpoints the worker uses', () => {
   const raid = { level: 300, path: 2 };
-  expect(raidHp(zebak.key, zebak.monster.skills.hp, raid)).toBe(inRaid(zebak.monster, raid).skills.hp);
+  expect(raidHp(zebak.key, zebak.monster.skills.hp, raid)).toBe(hpInCalc(inRaid(zebak.monster, raid)));
   expect(raidHp(zebak.key, zebak.monster.skills.hp, { level: 0, path: 0 })).toBe(zebak.monster.skills.hp);
 });
 
 test('a path level adds hitpoints to its boss but leaves it as easy to hit', () => {
   const raised = inRaid(zebak.monster, { level: 300, path: 2 });
-  expect(raised.skills.hp).toBe(1440);
+  expect(hpInCalc(raised)).toBe(1440);
   const accuracy = (m: typeof raised) => evaluate(setup, m, character).accuracy;
   expect(accuracy(raised)).toBe(accuracy(inRaid(zebak.monster, { level: 300, path: 0 })));
 });
