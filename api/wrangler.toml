@@ -6,7 +6,7 @@ compatibility_date = "2026-09-01"
 
 [vars]
 # The sites allowed to ask, comma-separated.
-ALLOWED_ORIGINS = "https://tristanbowdenfreeman-maker.github.io,http://localhost:5173"
+ALLOWED_ORIGINS = "https://bisonabudget.com,https://www.bisonabudget.com,https://tristanbowdenfreeman-maker.github.io,http://localhost:5173"
 
 # Each visitor (by IP address) gets this many lookups a minute.
 [[ratelimits]]
