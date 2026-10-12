@@ -225,6 +225,9 @@ p { margin: 0; }
   gap: 4px;
 }
 
+.donate a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.donate a:hover { text-decoration: underline; }
+
 /* Monster */
 
 .monster-search { position: relative; }

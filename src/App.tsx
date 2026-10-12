@@ -27,6 +27,9 @@ import { RsnBox } from './ui/RsnBox';
 import { ThemeButton } from './ui/ThemeButton';
 import { Upgrades } from './ui/Upgrades';
 
+// Ko-fi page for the footer's tip link. Left empty, the link stays hidden.
+const DONATE_URL = 'https://ko-fi.com/bisonabudget';
+
 const MAXED: Skills = {
   atk: 99, str: 99, def: 99, ranged: 99, magic: 99, prayer: 99, hp: 99, agility: 99, slayer: 99, mining: 99, herblore: 99,
 };
@@ -369,6 +372,12 @@ export const App = () => {
           DPS from the <a href="https://tools.runescape.wiki/osrs-dps/" target="_blank" rel="noreferrer">OSRS Wiki DPS calculator</a>.
           Prices from the <a href="https://prices.runescape.wiki/" target="_blank" rel="noreferrer">OSRS Wiki real-time prices</a>, as Grand Exchange instant-buy prices.
         </p>
+        {DONATE_URL && (
+          <p className="donate">
+            Free to use with no ads. If it saved you some GP, you can{' '}
+            <a href={DONATE_URL} target="_blank" rel="noreferrer">buy me a coffee</a>.
+          </p>
+        )}
         <p>Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.</p>
       </footer>
 
