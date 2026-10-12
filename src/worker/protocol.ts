@@ -158,6 +158,8 @@ interface Common {
   custom: CustomMonster | null;
   /** The Tombs of Amascut raid and path levels, used only on its monsters. */
   raid: Raid;
+  /** Chambers of Xeric Challenge Mode, used only on its monsters. */
+  cm: boolean;
   drains: Drains;
   character: CharacterInput;
   classes: CombatClass[];

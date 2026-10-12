@@ -5,6 +5,7 @@ import type { Character } from './hiscores';
 import { eitherOf } from './format';
 import { protectionFor } from './protection';
 import { inToa, PATH_LEVEL_MAX, pathOf, RAID_LEVEL_MAX, raidHp } from './toa';
+import { inCox } from './cox';
 import { NO_DRAINS } from './drains';
 import type { Drains } from './drains';
 import { wildernessOf } from './wilderness';
@@ -56,6 +57,7 @@ export const App = () => {
   const [storedRaidLevel, setRaidLevel] = useStored('raidLevel', 0);
   // Each Tombs of Amascut path keeps its own level, as it does in a raid.
   const [pathLevels, setPathLevels] = useStored<Record<string, number>>('pathLevels', {});
+  const [storedCm, setCm] = useStored('coxCm', false);
   // Only the monsters with Defence drains set.
   const [drainChoices, setDrainChoices] = useStored<Record<string, Drains>>('drains', {});
 
@@ -91,14 +93,17 @@ export const App = () => {
     () => (toa ? { ...monster, skills: { ...monster.skills, hp: raidHp(monster.key, monster.skills.hp, raid) } } : monster),
     [monster, toa, raid],
   );
+  // The Challenge Mode switch only shows for Chambers of Xeric monsters.
+  const cox = !isCustom && inCox(monster.attributes);
+  const cm = cox && storedCm;
   const drains = drainChoices[monster.key] ?? NO_DRAINS;
   const setDrains = (d: Drains) => {
     const { [monster.key]: _, ...others } = drainChoices;
     setDrainChoices(d === NO_DRAINS ? others : { ...others, [monster.key]: d });
   };
   const common = useMemo(
-    () => ({ monster: monster.key, custom: customStats, raid, drains, character, classes }),
-    [monster.key, customStats, raid, drains, character, classes],
+    () => ({ monster: monster.key, custom: customStats, raid, cm, drains, character, classes }),
+    [monster.key, customStats, raid, cm, drains, character, classes],
   );
 
   // A setup changed by hand stays only while everything else stays the same.
@@ -273,6 +278,14 @@ export const App = () => {
                   <span className="switch-track" aria-hidden="true" />
                   <img src={wikiImage('Skull (status) icon')} alt="" />
                   In the Wilderness
+                </label>
+              )}
+              {cox && (
+                <label className="switch" title="Chambers of Xeric monsters in Challenge Mode have 50% more hitpoints and stronger stats. Worked out for a solo raid.">
+                  <input type="checkbox" checked={cm} onChange={(e) => setCm(e.target.checked)} />
+                  <span className="switch-track" aria-hidden="true" />
+                  <img src={wikiImage('Olmlet')} alt="" />
+                  Challenge Mode
                 </label>
               )}
               {toa && (

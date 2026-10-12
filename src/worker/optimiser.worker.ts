@@ -7,6 +7,7 @@ import { assumedBoosts, evaluate, SetupInput } from '../engine/evaluate';
 import { Optimiser, Setup } from '../optimiser/optimise';
 import { fetchPrices, Price } from '../prices';
 import { inRaid, Raid } from '../toa';
+import { inChallengeMode } from '../cox';
 import type { Drains } from '../drains';
 import { withDrains } from '../engine/drains';
 import { scaleMonster } from '@/lib/MonsterScaling';
@@ -21,13 +22,13 @@ const optimisers = new Map<string, Optimiser>();
 const KEEP = 4;
 
 const optimiserFor = async (
-  monster: string, custom: CustomMonster | null, raid: Raid, drains: Drains, character: CharacterInput,
+  monster: string, custom: CustomMonster | null, raid: Raid, cm: boolean, drains: Drains, character: CharacterInput,
 ): Promise<Optimiser> => {
-  const key = `${monster}|${JSON.stringify(custom)}|${raid.level}:${raid.path}|${JSON.stringify(drains)}|${JSON.stringify(character)}`;
+  const key = `${monster}|${JSON.stringify(custom)}|${raid.level}:${raid.path}|${cm}|${JSON.stringify(drains)}|${JSON.stringify(character)}`;
   let o = optimisers.get(key);
   if (!o) {
     const base = monsterByKey.get(monster)?.monster;
-    const raided = custom ? customMonster(custom) : base && inRaid(base, raid);
+    const raided = custom ? customMonster(custom) : base && inChallengeMode(inRaid(base, raid), cm);
     if (!raided) throw new Error(`Unknown monster ${monster}`);
     const fight = withDrains(raided, drains);
     prices ??= fetchPrices();
@@ -156,7 +157,7 @@ const outcome = (o: Optimiser, setup: Setup, request: Request): Outcome => ({
 let newest = 0;
 
 const handle = async (id: number, request: Request): Promise<Results[Request['kind']]> => {
-  const o = await optimiserFor(request.monster, request.custom, request.raid, request.drains, request.character);
+  const o = await optimiserFor(request.monster, request.custom, request.raid, request.cm, request.drains, request.character);
   if ((request.kind === 'best' || request.kind === 'evaluate') && id !== newest) throw new Error('Replaced by a newer search');
   switch (request.kind) {
     case 'best': {
