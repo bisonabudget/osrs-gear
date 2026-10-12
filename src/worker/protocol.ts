@@ -111,6 +111,8 @@ export interface UpgradeView {
   itemId: number;
   gain: number;
   netCost: number;
+  /** Seconds the upgrade takes off each kill, or null when the current setup can't kill. */
+  timeSaved: number | null;
   setup: SetupRef;
 }
 

@@ -145,13 +145,20 @@ const statsOf = (o: Optimiser, setup: Setup): Stats => {
   };
 };
 
-const outcome = (o: Optimiser, setup: Setup, request: Request): Outcome => ({
-  setup: view(o, setup),
-  stats: statsOf(o, setup),
-  upgrades: o.upgrades(setup, request.classes).map((u) => ({
-    slot: u.slot, itemId: u.item.piece.id, gain: u.gain, netCost: u.netCost, setup: toRef(u.setup),
-  })),
-});
+const outcome = (o: Optimiser, setup: Setup, request: Request): Outcome => {
+  const stats = statsOf(o, setup);
+  return {
+    setup: view(o, setup),
+    stats,
+    upgrades: o.upgrades(setup, request.classes).map((u) => {
+      const saved = stats.killTime - evaluate(u.setup, o.monster, o.character, false, o.fightCache).killTime;
+      return {
+        slot: u.slot, itemId: u.item.piece.id, gain: u.gain, netCost: u.netCost, setup: toRef(u.setup),
+        timeSaved: Number.isFinite(saved) ? saved : null,
+      };
+    }),
+  };
+};
 
 // The page only shows the newest search, so one replaced while it waited is skipped.
 let newest = 0;

@@ -1,5 +1,5 @@
 import { itemImage, itemInfo } from '../catalog';
-import { formatGp } from '../format';
+import { formatGp, formatSeconds } from '../format';
 import type { Outcome, UpgradeView } from '../worker/protocol';
 import { Coins } from './Coins';
 
@@ -30,7 +30,10 @@ export const Upgrades = ({ outcome, budget, onTake }: Props) => {
               >
                 <span className="upgrade-icon"><img src={itemImage(item.image)} alt="" /></span>
                 <span className="upgrade-name">{item.name}</span>
-                <span className="upgrade-gain">+{u.gain.toFixed(2)} DPS</span>
+                <span className="upgrade-gain">
+                  +{u.gain.toFixed(2)} DPS
+                  {u.timeSaved !== null && u.timeSaved > 0 && <span className="upgrade-time">−{formatSeconds(u.timeSaved)} per kill</span>}
+                </span>
                 <Coins gp={u.netCost} sign />
               </button>
             </li>
