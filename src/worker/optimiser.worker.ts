@@ -1,8 +1,9 @@
 // Runs the engine and the search away from the page, so typing a budget never freezes it.
 import { getRangedDamageType, PlayerCombatStyle } from '@/types/PlayerCombatStyle';
 import { spells } from '@/types/Spell';
+import { takesSunfire, usesSunfire, withSunfire } from '../optimiser/sunfire';
 import { customMonster, emptyEquipment, itemById, monsterByKey, SLOTS } from '../engine/data';
-import { assumedBoosts, classOf, evaluate, SetupInput } from '../engine/evaluate';
+import { assumedBoosts, evaluate, SetupInput } from '../engine/evaluate';
 import { Optimiser, Setup } from '../optimiser/optimise';
 import { fetchPrices, Price } from '../prices';
 import type {
@@ -32,6 +33,12 @@ const optimiserFor = async (monster: string, custom: CustomMonster | null, chara
   return o;
 };
 
+const spellOf = (ref: SetupRef) => {
+  const spell = ref.spell === null ? undefined : spells.find((s) => s.name === ref.spell);
+  if (!spell) return null;
+  return ref.sunfire && takesSunfire(spell) ? withSunfire(spell) : spell;
+};
+
 const toInput = (ref: SetupRef): SetupInput => {
   const equipment = emptyEquipment();
   for (const slot of SLOTS) {
@@ -45,7 +52,7 @@ const toInput = (ref: SetupRef): SetupInput => {
   return {
     equipment,
     style: ref.style as PlayerCombatStyle,
-    spell: ref.spell === null ? null : spells.find((s) => s.name === ref.spell) ?? null,
+    spell: spellOf(ref),
   };
 };
 
@@ -54,6 +61,7 @@ const toRef = (input: SetupInput): SetupRef => ({
   dart: input.equipment.weapon?.itemVars?.blowpipeDartId ?? null,
   style: { name: input.style.name, type: input.style.type, stance: input.style.stance },
   spell: input.spell?.name ?? null,
+  sunfire: usesSunfire(input.spell),
 });
 
 const priceTime = (o: Optimiser, id: number): number | null => {
@@ -110,7 +118,7 @@ const statsOf = (o: Optimiser, setup: Setup): Stats => {
     offensive,
     defensive: { stab: defensive.stab, slash: defensive.slash, crush: defensive.crush, magic: defensive.magic, ranged: defensive.ranged },
     strength: { melee: bonuses.str, ranged: bonuses.ranged_str, magic: bonuses.magic_str, prayer: bonuses.prayer },
-    ...assumedBoosts(classOf(setup.style), o.character, setup.spell),
+    ...assumedBoosts(setup, o.character),
     against: againstOf(setup),
     element: setup.spell?.element ?? null,
     details: result.details,

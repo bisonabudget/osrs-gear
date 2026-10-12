@@ -9,6 +9,7 @@ import { itemById, Slot, SLOTS } from '../engine/data';
 import type { SetupInput } from '../engine/evaluate';
 import { Rune, RUNES, SPELLS } from './spellbook';
 import { ammoSaved } from './specials';
+import { usesSunfire } from './sunfire';
 
 export type UseKind = 'ammo' | 'runes' | 'charges';
 
@@ -34,11 +35,13 @@ const VIAL_OF_BLOOD = 22446;
 const WHIP = 4151;
 const SARADOMIN_SWORD = 11838;
 const CHARGED_QUIVER = 28951;
+const SUNFIRE_RUNE = 28929;
 
 const NAMES: Record<number, string> = {
   [SCALES]: "Zulrah's scales",
   [ETHER]: 'Revenant ether',
   [SPLINTERS]: 'Sunfire splinters',
+  [SUNFIRE_RUNE]: 'Sunfire rune',
   [DEMON_TEAR]: 'Demon tear',
   [VIAL_OF_BLOOD]: 'Vial of blood',
   [WHIP]: 'Abyssal whip',
@@ -184,8 +187,11 @@ export const attackUses = ({ equipment, style, spell }: SetupInput, attacks: num
   if (spell && style.type === 'magic') {
     const free = [...runesFrom(weapon), ...runesFrom(shield)];
     const keep = 1 - (RUNE_SAVING[weapon.name.toLowerCase()] ?? 0);
+    const sunfire = usesSunfire(spell);
     for (const [rune, n] of Object.entries(SPELLS[spell.name]?.runes ?? {}) as [Rune, number][]) {
-      if (!free.includes(rune)) add(RUNES[rune], n * keep, 'runes');
+      // Sunfire runes are used in place of fire runes even when a staff or tome gives fire runes.
+      if (sunfire && rune === 'fire') add(SUNFIRE_RUNE, n * keep, 'runes');
+      else if (!free.includes(rune)) add(RUNES[rune], n * keep, 'runes');
     }
     const tome = shield && TOMES[shield.name.toLowerCase()];
     if (tome && spell.spellbook === 'standard' && spell.element === tome.rune) {

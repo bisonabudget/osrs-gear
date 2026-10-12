@@ -21,6 +21,7 @@ import { meets } from '../requirements';
 import { Frontier, itemsOf, Option, Point } from './frontier';
 import { ammoSaved, setFitsWeapon, SETS } from './specials';
 import { canAutocast, spellLevel } from './spellbook';
+import { spellKey, takesSunfire, withSunfire } from './sunfire';
 import {
   ammoSlotOf, attackUses, savesAmmo, tomeHelps, upkeepOf, Use, usedUp, usesOf,
 } from './supplies';
@@ -40,7 +41,7 @@ const MIN_GAIN = 0.01;
 const GOD_SPELLS = new Set(['Saradomin Strike', 'Claws of Guthix', 'Flames of Zamorak']);
 
 const setupKey = ({ equipment, style, spell }: SetupInput) => [
-  ...SLOTS.map((s) => equipment[s]?.id ?? ''), equipment.weapon?.itemVars?.blowpipeDartId ?? '', style.name, style.type, spell?.name ?? '',
+  ...SLOTS.map((s) => equipment[s]?.id ?? ''), equipment.weapon?.itemVars?.blowpipeDartId ?? '', style.name, style.type, spellKey(spell),
 ].join('|');
 
 // Everything the engine adds up for an item. Two items with the same key differ only in name and
@@ -290,7 +291,8 @@ export class Optimiser {
   /**
    * The spells worth trying with a weapon: ones the Magic level allows and the weapon can
    * autocast, leaving out any that another beats on both DPS and rune cost with the weapon alone.
-   * With Charge cast, god spells only gain with their god cape, so they're always kept.
+   * With Charge cast, god spells only gain with their god cape, so they're always kept. Fire
+   * spells are tried with and without sunfire runes.
    */
   private spellsFor(weapon: EquipmentPiece, style: PlayerCombatStyle): Spell[] {
     const key = `${weapon.name}|${style.stance}`;
@@ -298,6 +300,7 @@ export class Optimiser {
     if (!ranked) {
       const scored = spells
         .filter((spell) => spellLevel(spell.name) <= this.character.skills.magic && canAutocast(weapon.name, spell))
+        .flatMap((spell) => (takesSunfire(spell) ? [spell, withSunfire(spell)] : [spell]))
         .map((spell) => {
           const input = { equipment: { ...emptyEquipment(), weapon }, style, spell };
           const uses = attackUses(input, TICKS_PER_HOUR / this.playerSpeed(input), this.gpOf);
@@ -449,7 +452,7 @@ export class Optimiser {
   // Tasks with the same key get the same help from special items. The weapon's category only
   // matters to them for ranged (crossbow bolts and the heavy, standard and light ammo types).
   private relevanceKey(task: Task) {
-    return [task.cls, task.type, task.cls === 'ranged' ? task.weapon.category : '', task.weapon.isTwoHanded, task.spell?.name ?? '', task.ammo ? 1 : 0].join('|');
+    return [task.cls, task.type, task.cls === 'ranged' ? task.weapon.category : '', task.weapon.isTwoHanded, spellKey(task.spell), task.ammo ? 1 : 0].join('|');
   }
 
   private equipmentWith(task: Task, extra: Iterable<[Slot, EquipmentPiece]>, weapon = task.weapon): PlayerEquipment {
@@ -475,7 +478,7 @@ export class Optimiser {
     // A weapon that does nothing without its name (a powered staff's spell comes from its name)
     // is tested as itself, so what is found only holds for that weapon.
     const plain = anonymous(task.weapon);
-    const namedKey = `${task.weapon.name}|${task.style.type}|${task.style.stance}|${task.spell?.name ?? ''}|${task.ammo?.piece.id ?? ''}`;
+    const namedKey = `${task.weapon.name}|${task.style.type}|${task.style.stance}|${spellKey(task.spell)}|${task.ammo?.piece.id ?? ''}`;
     let named = this.needsName.get(namedKey);
     if (named === undefined) {
       named = this.dps({ equipment: this.equipmentWith(task, [], plain), style: task.style, spell: task.spell }) <= 0;
@@ -637,7 +640,7 @@ export class Optimiser {
   // ------------------------------------------------------------------ search
 
   private value(task: Task, fixed: Fixed, slots: Slot[], a: number, s: number): number {
-    const key = `${task.weapon.name}|${task.weapon.itemVars?.blowpipeDartId ?? ''}|${task.style.type}|${task.style.stance}|${task.spell?.name ?? ''}|${task.ammo?.piece.id ?? ''}|${[...fixed.items.values()].map((i) => i.piece.id).join(',')}|${a}|${s}`;
+    const key = `${task.weapon.name}|${task.weapon.itemVars?.blowpipeDartId ?? ''}|${task.style.type}|${task.style.stance}|${spellKey(task.spell)}|${task.ammo?.piece.id ?? ''}|${[...fixed.items.values()].map((i) => i.piece.id).join(',')}|${a}|${s}`;
     let v = this.evals.get(key);
     if (v === undefined) {
       const extra: [Slot, EquipmentPiece][] = [...fixed.items].map(([slot, item]) => [slot, item.piece]);

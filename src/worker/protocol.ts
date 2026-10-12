@@ -48,6 +48,8 @@ export interface SetupRef {
   dart: number | null;
   style: StyleRef;
   spell: string | null;
+  /** Whether the spell is cast with sunfire runes. */
+  sunfire: boolean;
 }
 
 export interface SetupView extends SetupRef {

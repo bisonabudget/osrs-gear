@@ -31,7 +31,7 @@ const CLASSES: { id: CombatClass, name: string, icon: string }[] = [
   { id: 'magic', name: 'Magic', icon: 'Magic icon' },
 ];
 
-const toRef = ({ items, dart, style, spell }: SetupRef): SetupRef => ({ items, dart, style, spell });
+const toRef = ({ items, dart, style, spell, sunfire }: SetupRef): SetupRef => ({ items, dart, style, spell, sunfire });
 
 export const App = () => {
   const [monsterKey, setMonsterKey] = useStored('monster', DEFAULT_MONSTER);

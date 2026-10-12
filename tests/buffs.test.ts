@@ -1,7 +1,10 @@
-// The Kandarin diary, Charge and Wilderness switches, and Mark of Darkness, reach the DPS calculator.
+// The Kandarin diary, Charge and Wilderness switches, and the boosts assumed for everyone (Mark of
+// Darkness, Soulreaper axe stacks and sunfire runes), reach the DPS calculator.
 import { expect, test } from 'vitest';
 import { emptyEquipment, items, monsters } from '../src/engine/data';
-import { assumedBoosts, dpsOf } from '../src/engine/evaluate';
+import { assumedBoosts, buildPlayer, dpsOf } from '../src/engine/evaluate';
+import { attackUses } from '../src/optimiser/supplies';
+import { takesSunfire, withSunfire } from '../src/optimiser/sunfire';
 import { spells } from '@/types/Spell';
 import { getCombatStylesForCategory } from '@/utils';
 
@@ -41,5 +44,25 @@ test('Mark of Darkness is cast with demonbane spells from 59 Magic', () => {
   const setup = { equipment: { ...emptyEquipment(), weapon }, style, spell: spells.find((s) => s.name === 'Inferior Demonbane')! };
   const yama = monsters.find((m) => m.name === 'Yama')!.monster;
   expect(dpsOf(setup, yama, character)).toBeGreaterThan(dpsOf(setup, yama, { ...character, skills: { ...skills, magic: 58 } }) * 1.2);
-  expect(assumedBoosts('magic', character, setup.spell).effects).toContain('Mark of Darkness');
+  expect(assumedBoosts(setup, character).effects).toContain('Mark of Darkness');
+});
+
+test('the Soulreaper axe is held at 5 stacks', () => {
+  const weapon = piece('Soulreaper axe');
+  const setup = { equipment: { ...emptyEquipment(), weapon }, style: getCombatStylesForCategory(weapon.category)[1], spell: null };
+  expect(buildPlayer(setup, monster, character).buffs.soulreaperStacks).toBe(5);
+  expect(assumedBoosts(setup, character).effects).toContain('5 Soulreaper axe stacks');
+});
+
+test('sunfire runes raise fire spell DPS and are used even with a fire staff', () => {
+  const weapon = piece('Staff of fire');
+  const style = getCombatStylesForCategory(weapon.category).find((s) => s.stance === 'Autocast')!;
+  const blast = spells.find((s) => s.name === 'Fire Blast')!;
+  const plain = { equipment: { ...emptyEquipment(), weapon }, style, spell: blast };
+  const sunfire = { ...plain, spell: withSunfire(blast) };
+  expect(dpsOf(sunfire, monster, character)).toBeGreaterThan(dpsOf(plain, monster, character));
+  const names = (input: typeof plain) => attackUses(input, 1, () => 1).map((u) => u.name);
+  expect(names(plain)).not.toContain('Fire rune');
+  expect(names(sunfire)).toContain('Sunfire rune');
+  expect(takesSunfire(withSunfire(blast))).toBe(false);
 });

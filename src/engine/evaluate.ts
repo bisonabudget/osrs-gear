@@ -11,6 +11,7 @@ import { PlayerCombatStyle } from '@/types/PlayerCombatStyle';
 import { Spell } from '@/types/Spell';
 import type { Skills } from '../worker/protocol';
 import { generateEmptyPlayer } from './emptyPlayer';
+import { usesSunfire } from '../optimiser/sunfire';
 
 export type CombatClass = 'melee' | 'ranged' | 'magic';
 
@@ -66,17 +67,25 @@ const potionFor = (cls: CombatClass, character: Character): Potion => {
 // Mark of Darkness is on the Arceuus spellbook from 59 Magic and boosts the demonbane spells.
 const usesMark = (spell: Spell | null, { magic }: Skills) => !!spell?.name.includes('Demonbane') && magic >= 59;
 
-/** The names of the prayers, potion and other boosts assumed for a class. */
-export const assumedBoosts = (cls: CombatClass, character: Character, spell: Spell | null = null) => ({
-  prayers: prayersFor(cls, character.skills).map((p) => PrayerMap[p].name),
-  potion: PotionMap[potionFor(cls, character)].name,
-  // Only the ones that can change this class's DPS.
-  effects: [
-    ...(cls === 'ranged' && character.kandarinDiary ? ['the Kandarin hard diary'] : []),
-    ...(cls === 'magic' && character.chargeSpell ? ['Charge'] : []),
-    ...(cls === 'magic' && usesMark(spell, character.skills) ? ['Mark of Darkness'] : []),
-  ],
-});
+// The Soulreaper axe is assumed held at its most stacks, as it's built back up between kills.
+const SOULREAPER_STACKS = 5;
+
+/** The names of the prayers, potion and other boosts assumed for a setup. */
+export const assumedBoosts = ({ style, spell, equipment }: SetupInput, character: Character) => {
+  const cls = classOf(style);
+  return {
+    prayers: prayersFor(cls, character.skills).map((p) => PrayerMap[p].name),
+    potion: PotionMap[potionFor(cls, character)].name,
+    // Only the ones that can change this class's DPS.
+    effects: [
+      ...(cls === 'ranged' && character.kandarinDiary ? ['the Kandarin hard diary'] : []),
+      ...(cls === 'magic' && character.chargeSpell ? ['Charge'] : []),
+      ...(cls === 'magic' && usesMark(spell, character.skills) ? ['Mark of Darkness'] : []),
+      ...(cls === 'magic' && usesSunfire(spell) ? ['sunfire runes'] : []),
+      ...(equipment.weapon?.name === 'Soulreaper axe' ? [`${SOULREAPER_STACKS} Soulreaper axe stacks`] : []),
+    ],
+  };
+};
 
 // Issues that mean the Setup can't be used against this Monster.
 const BLOCKING = new Set([
@@ -107,6 +116,7 @@ export const buildPlayer = (setup: SetupInput, monster: Monster, character: Char
   player.buffs = {
     ...player.buffs, potions: [potion], onSlayerTask: character.onTask, kandarinDiary: character.kandarinDiary, chargeSpell: character.chargeSpell,
     inWilderness: character.inWilderness, markOfDarknessSpell: usesMark(setup.spell, character.skills),
+    usingSunfireRunes: usesSunfire(setup.spell), soulreaperStacks: SOULREAPER_STACKS,
   };
   const totals = calculateEquipmentBonusesFromGear(player, monster);
   player.bonuses = totals.bonuses;
