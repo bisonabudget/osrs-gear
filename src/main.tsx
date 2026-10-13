@@ -8,6 +8,11 @@ import '@fontsource/roboto-condensed/500.css';
 import '@fontsource/roboto-condensed/700.css';
 import './styles.css';
 
+// The built site keeps itself on the visitor's device for their next visit (see src/sw.js).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

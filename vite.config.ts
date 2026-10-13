@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -46,11 +47,27 @@ const preconnect = (api: string): Plugin => ({
   transformIndexHtml: () => [{ tag: 'link', attrs: { rel: 'preconnect', href: api, crossorigin: true }, injectTo: 'head' }],
 });
 
+// Writes sw.js, which keeps the site on visitors' devices, with this release's file list at the
+// top. The list changes with every release, so browsers install the new copy.
+const offline = (): Plugin => ({
+  name: 'offline',
+  apply: 'build',
+  enforce: 'post',
+  generateBundle(_, bundle) {
+    const files = Object.keys(bundle).filter((f) => f.startsWith('assets/')).sort();
+    this.emitFile({
+      type: 'asset',
+      fileName: 'sw.js',
+      source: `const FILES = ${JSON.stringify(files)};\n\n${readFileSync(path('./src/sw.js'), 'utf8')}`,
+    });
+  },
+});
+
 const apiOrigin = (mode: string) => new URL(loadEnv(mode, process.cwd(), 'VITE_').VITE_API ?? 'https://api.bisonabudget.com').origin;
 
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [react(), securityPolicy(apiOrigin(mode)), preconnect(apiOrigin(mode))],
+  plugins: [react(), securityPolicy(apiOrigin(mode)), preconnect(apiOrigin(mode)), offline()],
   // The engine was written for Next.js, which fills these in.
   define: {
     'process.env.NEXT_PUBLIC_HIT_DIST_SANITY_CHECK': 'undefined',
