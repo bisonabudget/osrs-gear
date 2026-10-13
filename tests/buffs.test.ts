@@ -44,14 +44,14 @@ test('Mark of Darkness is cast with demonbane spells from 59 Magic', () => {
   const setup = { equipment: { ...emptyEquipment(), weapon }, style, spell: spells.find((s) => s.name === 'Inferior Demonbane')! };
   const yama = monsters.find((m) => m.name === 'Yama')!.monster;
   expect(dpsOf(setup, yama, character)).toBeGreaterThan(dpsOf(setup, yama, { ...character, skills: { ...skills, magic: 58 } }) * 1.2);
-  expect(assumedBoosts(setup, character).effects).toContain('Mark of Darkness');
+  expect(assumedBoosts(setup, character, yama).effects).toContain('Mark of Darkness');
 });
 
 test('the Soulreaper axe is held at 5 stacks', () => {
   const weapon = piece('Soulreaper axe');
   const setup = { equipment: { ...emptyEquipment(), weapon }, style: getCombatStylesForCategory(weapon.category)[1], spell: null };
   expect(buildPlayer(setup, monster, character).buffs.soulreaperStacks).toBe(5);
-  expect(assumedBoosts(setup, character).effects).toContain('5 Soulreaper axe stacks');
+  expect(assumedBoosts(setup, character, monster).effects).toContain('5 Soulreaper axe stacks');
 });
 
 test('sunfire runes raise fire spell DPS and are used even with a fire staff', () => {
@@ -65,4 +65,15 @@ test('sunfire runes raise fire spell DPS and are used even with a fire staff', (
   expect(names(plain)).not.toContain('Fire rune');
   expect(names(sunfire)).toContain('Sunfire rune');
   expect(takesSunfire(withSunfire(blast))).toBe(false);
+});
+
+test('raids use their own potions', () => {
+  const weapon = piece('Twisted bow');
+  const setup = { equipment: { ...emptyEquipment(), weapon }, style: getCombatStylesForCategory(weapon.category)[1], spell: null };
+  const boss = (name: string) => monsters.find((m) => m.name === name)!.monster;
+  expect(assumedBoosts(setup, character, boss('Zebak')).potion).toBe('Smelling salts');
+  expect(buildPlayer(setup, boss('Zebak'), character).boosts.ranged).toBe(26);
+  expect(assumedBoosts(setup, character, boss('Tekton')).potion).toBe('Overload (+)');
+  expect(buildPlayer(setup, boss('Tekton'), character).boosts.ranged).toBe(21);
+  expect(assumedBoosts(setup, character, boss('Vorkath')).potion).toBe('Ranging potion');
 });

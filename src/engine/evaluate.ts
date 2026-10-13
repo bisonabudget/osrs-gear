@@ -6,6 +6,8 @@ import Potion from '@/enums/Potion';
 import { Prayer, PrayerMap } from '@/enums/Prayer';
 import UserIssueType from '@/enums/UserIssueType';
 import { EquipmentCategory } from '@/enums/EquipmentCategory';
+import { MonsterAttribute } from '@/enums/MonsterAttribute';
+import { TOMBS_OF_AMASCUT_MONSTER_IDS } from '@/lib/constants';
 import { Monster } from '@/types/Monster';
 import { Player, PlayerEquipment, PlayerSkills } from '@/types/Player';
 import { PlayerCombatStyle } from '@/types/PlayerCombatStyle';
@@ -59,7 +61,17 @@ export const prayersFor = (cls: CombatClass, { prayer, def }: Skills): Prayer[] 
   return both.length ? both : [...best(STRENGTH), ...best(ATTACK)];
 };
 
-const potionFor = (cls: CombatClass, character: Character): Potion => {
+// Raids have their own potions that boost more than anything outside them: smelling salts in the
+// Tombs of Amascut and overloads (+) in the Chambers of Xeric. Each boosts every combat skill.
+const raidPotionFor = (monster: Monster): Potion | null => {
+  if (TOMBS_OF_AMASCUT_MONSTER_IDS.includes(monster.id)) return Potion.SMELLING_SALTS;
+  if (monster.attributes.includes(MonsterAttribute.XERICIAN)) return Potion.OVERLOAD_PLUS;
+  return null;
+};
+
+const potionFor = (cls: CombatClass, character: Character, monster: Monster): Potion => {
+  const raid = raidPotionFor(monster);
+  if (raid !== null) return raid;
   if (cls === 'melee') return Potion.SUPER_COMBAT;
   if (cls === 'ranged') return Potion.RANGING;
   return character.untradeables ? Potion.SATURATED_HEART : Potion.MAGIC;
@@ -72,11 +84,11 @@ const usesMark = (spell: Spell | null, { magic }: Skills) => !!spell?.name.inclu
 const SOULREAPER_STACKS = 5;
 
 /** The names of the prayers, potion and other boosts assumed for a setup. */
-export const assumedBoosts = ({ style, spell, equipment }: SetupInput, character: Character) => {
+export const assumedBoosts = ({ style, spell, equipment }: SetupInput, character: Character, monster: Monster) => {
   const cls = classOf(style);
   return {
     prayers: prayersFor(cls, character.skills).map((p) => PrayerMap[p].name),
-    potion: PotionMap[potionFor(cls, character)].name,
+    potion: PotionMap[potionFor(cls, character, monster)].name,
     // Only the ones that can change this class's DPS.
     effects: [
       ...(cls === 'ranged' && character.kandarinDiary ? ['the Kandarin hard diary'] : []),
@@ -104,7 +116,7 @@ const boostsFor = (potion: Potion, skills: PlayerSkills): PlayerSkills => {
 
 export const buildPlayer = (setup: SetupInput, monster: Monster, character: Character): Player => {
   const cls = classOf(setup.style);
-  const potion = potionFor(cls, character);
+  const potion = potionFor(cls, character, monster);
   const player: Player = {
     ...generateEmptyPlayer(),
     skills: character.skills,
