@@ -1,7 +1,8 @@
 // Checks that the best setup really is the best, by trying to beat it in ways the search doesn't
 // work: one item swapped at a time, and random setups climbed one swap at a time.
 import { describe, expect, test } from 'vitest';
-import { monsters, Slot, SLOTS } from '../src/engine/data';
+import { Slot, SLOTS } from '../src/engine/data';
+import { monsters } from '../src/engine/monsters';
 import type { CombatClass } from '../src/engine/evaluate';
 import { Optimiser, Setup } from '../src/optimiser/optimise';
 import { pickPrices } from '../src/prices';

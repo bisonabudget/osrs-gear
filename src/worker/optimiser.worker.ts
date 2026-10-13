@@ -2,7 +2,8 @@
 import { getRangedDamageType, PlayerCombatStyle } from '@/types/PlayerCombatStyle';
 import { spells } from '@/types/Spell';
 import { takesSunfire, usesSunfire, withSunfire } from '../optimiser/sunfire';
-import { customMonster, emptyEquipment, itemById, monsterByKey, SLOTS } from '../engine/data';
+import { loadFight } from 'virtual:fights';
+import { customMonster, emptyEquipment, fromRow, inFight, itemById, SLOTS } from '../engine/data';
 import { assumedBoosts, evaluate, SetupInput } from '../engine/evaluate';
 import { Optimiser, Setup } from '../optimiser/optimise';
 import { fetchPrices, Price } from '../prices';
@@ -11,6 +12,7 @@ import { inChallengeMode } from '../cox';
 import type { Drains } from '../drains';
 import { withDrains } from '../engine/drains';
 import { scaleMonster } from '@/lib/MonsterScaling';
+import type { Monster } from '@/types/Monster';
 import type {
   CharacterInput, CustomMonster, Outcome, Reply, Request, Results, SetupRef, SetupView, SlotOption, Stats,
 } from './protocol';
@@ -19,6 +21,19 @@ import type {
 // fail, the next search fetches them again.
 let prices: Promise<Map<number, Price>> | null = fetchPrices();
 prices.catch(() => {});
+
+// Each fight's engine monster, downloaded the first time it's searched. One that fails to arrive
+// is tried again on the next search.
+const fights = new Map<string, Promise<Monster>>();
+const fightOf = (key: string): Promise<Monster> => {
+  let fight = fights.get(key);
+  if (!fight) {
+    fight = loadFight(key).then((row) => inFight(fromRow(row)));
+    fight.catch(() => fights.delete(key));
+    fights.set(key, fight);
+  }
+  return fight;
+};
 
 // The last few monster and character pairs searched, since each keeps what it has worked out.
 const optimisers = new Map<string, Optimiser>();
@@ -30,15 +45,13 @@ const optimiserFor = async (
   const key = `${monster}|${JSON.stringify(custom)}|${raid.level}:${raid.path}|${cm}|${JSON.stringify(drains)}|${JSON.stringify(character)}`;
   let o = optimisers.get(key);
   if (!o) {
-    const base = monsterByKey.get(monster)?.monster;
-    const raided = custom ? customMonster(custom) : base && inChallengeMode(inRaid(base, raid), cm);
-    if (!raided) throw new Error(`Unknown monster ${monster}`);
-    const fight = withDrains(raided, drains);
     prices ??= fetchPrices();
-    o = new Optimiser(fight, character, await prices.catch((e) => {
+    const [base, known] = await Promise.all([fightOf(custom ? custom.from : monster), prices.catch((e) => {
       prices = null;
       throw e;
-    }));
+    })]);
+    const raided = custom ? customMonster(custom, base) : inChallengeMode(inRaid(base, raid), cm);
+    o = new Optimiser(withDrains(raided, drains), character, known);
     optimisers.set(key, o);
     if (optimisers.size > KEEP) optimisers.delete(optimisers.keys().next().value!);
   }

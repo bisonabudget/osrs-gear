@@ -1,6 +1,7 @@
 // Hits that change as the monster loses HP are averaged over the whole kill.
 import { expect, test } from 'vitest';
-import { emptyEquipment, items, monsters } from '../src/engine/data';
+import { emptyEquipment, items } from '../src/engine/data';
+import { monsters } from '../src/engine/monsters';
 import { dpsOf, evaluate, FightCache } from '../src/engine/evaluate';
 import { inRaid } from '../src/toa';
 import { getCombatStylesForCategory } from '@/utils';

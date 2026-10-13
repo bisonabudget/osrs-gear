@@ -1,7 +1,7 @@
 // The Custom monster: a copy of a fight's stats that the player changes.
 import { describe, expect, test } from 'vitest';
 import { copyOf, customInfo, monsterInfo, monsterList } from '../src/catalog';
-import { customMonster, monsters } from '../src/engine/data';
+import { customMonster, monsters } from '../src/engine/monsters';
 import { Optimiser } from '../src/optimiser/optimise';
 import { pickPrices } from '../src/prices';
 import fixture from './fixtures/prices.json';

@@ -1,7 +1,8 @@
 // The Kandarin diary, Charge and Wilderness switches, and the boosts assumed for everyone (Mark of
 // Darkness, Soulreaper axe stacks and sunfire runes), reach the DPS calculator.
 import { expect, test } from 'vitest';
-import { emptyEquipment, items, monsters } from '../src/engine/data';
+import { emptyEquipment, items } from '../src/engine/data';
+import { monsters } from '../src/engine/monsters';
 import { assumedBoosts, buildPlayer, dpsOf } from '../src/engine/evaluate';
 import { attackUses } from '../src/optimiser/supplies';
 import { takesSunfire, withSunfire } from '../src/optimiser/sunfire';

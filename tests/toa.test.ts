@@ -1,6 +1,7 @@
 // The Tombs of Amascut raid and path levels scale its monsters, and only them.
 import { expect, test } from 'vitest';
-import { emptyEquipment, items, monsters } from '../src/engine/data';
+import { emptyEquipment, items } from '../src/engine/data';
+import { monsters } from '../src/engine/monsters';
 import { buildPlayer, dpsOf, evaluate } from '../src/engine/evaluate';
 import { inRaid, inToa, pathOf, raidHp } from '../src/toa';
 import PlayerVsNPCCalc from '@/lib/PlayerVsNPCCalc';

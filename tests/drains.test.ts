@@ -1,6 +1,7 @@
 // Defence drains from special attacks and spells reach the DPS calculator.
 import { expect, test } from 'vitest';
-import { emptyEquipment, items, monsters } from '../src/engine/data';
+import { emptyEquipment, items } from '../src/engine/data';
+import { monsters } from '../src/engine/monsters';
 import { dpsOf } from '../src/engine/evaluate';
 import { withDrains } from '../src/engine/drains';
 import { drainSummary, NO_DRAINS } from '../src/drains';

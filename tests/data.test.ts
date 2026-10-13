@@ -1,6 +1,7 @@
 // The data scripts/build-data.ts writes, checked against the rules the site depends on.
 import { describe, expect, test } from 'vitest';
-import { items, monsterByKey } from '../src/engine/data';
+import { fromRow, inFight, items, MonsterRow } from '../src/engine/data';
+import { monsterByKey } from '../src/engine/monsters';
 import { scaleMonster } from '@/lib/MonsterScaling';
 import engineEquipment from '../src/data/engine-equipment.json';
 import engineMonsters from '../src/data/engine-monsters.json';
@@ -8,6 +9,7 @@ import fights from '../src/data/fights.json';
 import monsterRows from '../src/data/monsters.json';
 import equipmentAliases from '@/lib/EquipmentAliases';
 import { PROTECTIVE_ITEMS } from '../src/protection';
+import { fightFiles } from '../scripts/fight-files';
 
 describe('items', () => {
   test('every item adds to some attack, unless the engine does more with it or a monster demands it', () => {
@@ -94,5 +96,32 @@ describe('monsters', () => {
       if (shown !== used) wrong.push(`${row.name} ${row.version}: ${shown} / ${used}`);
     }
     expect(wrong).toEqual([]);
+  });
+});
+
+// The site's search downloads each fight on its own, so it must get exactly the monster the
+// engine's full list gives.
+describe('fight files', () => {
+  test('each fight has a file, and it gives the same monster as the full list', () => {
+    const files = fightFiles();
+    expect([...files.keys()].sort()).toEqual([...monsterByKey.keys()].sort());
+    const wrong = [...files].filter(([key, { body }]) => {
+      const loaded = inFight(fromRow(JSON.parse(body) as MonsterRow));
+      try {
+        expect(loaded).toStrictEqual(monsterByKey.get(key)!.monster);
+        return false;
+      } catch {
+        return true;
+      }
+    }).map(([key]) => key);
+    expect(wrong).toEqual([]);
+  });
+
+  test('a file is named by what is in it', () => {
+    const named = new Map<string, string>();
+    for (const { file, body } of fightFiles().values()) {
+      expect(named.get(file) ?? body).toBe(body);
+      named.set(file, body);
+    }
   });
 });

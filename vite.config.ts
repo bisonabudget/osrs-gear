@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { fightFiles } from './scripts/fight-files';
 
 const path = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -63,11 +64,51 @@ const offline = (): Plugin => ({
   },
 });
 
+// The search worker's 'virtual:fights', which loads one fight's engine monster. The built site
+// downloads it from its own small file; the dev server has them all in the module.
+const fightLoader = (): Plugin => {
+  let build = false;
+  return {
+    name: 'fight-loader',
+    configResolved: (config) => { build = config.command === 'build'; },
+    resolveId: (id) => (id === 'virtual:fights' ? '\0virtual:fights' : undefined),
+    load: (id) => {
+      if (id !== '\0virtual:fights') return undefined;
+      const fights = fightFiles();
+      if (!build) {
+        const bodies = Object.fromEntries([...fights].map(([key, f]) => [key, f.body]));
+        return `const bodies = ${JSON.stringify(bodies)};
+export const loadFight = async (key) => {
+  if (!(key in bodies)) throw new Error('Unknown monster ' + key);
+  return JSON.parse(bodies[key]);
+};`;
+      }
+      const files = Object.fromEntries([...fights].map(([key, f]) => [key, f.file]));
+      return `const files = ${JSON.stringify(files)};
+export const loadFight = async (key) => {
+  if (!(key in files)) throw new Error('Unknown monster ' + key);
+  const reply = await fetch(new URL(files[key], import.meta.url));
+  if (!reply.ok) throw new Error('Monster ' + key + ': ' + reply.status);
+  return reply.json();
+};`;
+    },
+  };
+};
+
+// Writes the files fightLoader downloads, next to the worker in assets/.
+const fightData = (): Plugin => ({
+  name: 'fight-data',
+  apply: 'build',
+  generateBundle() {
+    for (const { file, body } of fightFiles().values()) this.emitFile({ type: 'asset', fileName: `assets/${file}`, source: body });
+  },
+});
+
 const apiOrigin = (mode: string) => new URL(loadEnv(mode, process.cwd(), 'VITE_').VITE_API ?? 'https://api.bisonabudget.com').origin;
 
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [react(), securityPolicy(apiOrigin(mode)), preconnect(apiOrigin(mode)), offline()],
+  plugins: [react(), fightLoader(), fightData(), securityPolicy(apiOrigin(mode)), preconnect(apiOrigin(mode)), offline()],
   // The engine was written for Next.js, which fills these in.
   define: {
     'process.env.NEXT_PUBLIC_HIT_DIST_SANITY_CHECK': 'undefined',
@@ -89,7 +130,7 @@ export default defineConfig(({ mode }) => ({
       { find: /^@jest\/globals$/, replacement: 'vitest' },
     ],
   },
-  worker: { format: 'es' },
+  worker: { format: 'es', plugins: () => [fightLoader()] },
   server: {
     // Browsers can't read the hiscores from another site, so the dev server fetches them.
     proxy: {

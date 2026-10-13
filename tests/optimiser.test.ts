@@ -1,6 +1,7 @@
 // The search, run with a saved copy of the Grand Exchange prices so results don't move.
 import { describe, expect, test } from 'vitest';
-import { itemById, monsters, SLOTS } from '../src/engine/data';
+import { itemById, SLOTS } from '../src/engine/data';
+import { monsters } from '../src/engine/monsters';
 import type { CombatClass } from '../src/engine/evaluate';
 import { Optimiser, Setup, Swap } from '../src/optimiser/optimise';
 import { spellLevel } from '../src/optimiser/spellbook';

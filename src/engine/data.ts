@@ -1,16 +1,17 @@
-// The items and monsters the site works with: the Wiki calculator's data, cut down by
-// scripts/build-data.ts to one entry per item and one per fight.
+// The items the site works with and how it reads monsters: the Wiki calculator's data, cut down
+// by scripts/build-data.ts to one entry per item and one per fight. The full list of monsters is
+// in ./monsters.ts; the search loads only the one being fought.
 import { availableEquipment } from '@/lib/Equipment';
-import { getMonsters, INITIAL_MONSTER_INPUTS } from '@/lib/Monsters';
+import { INITIAL_MONSTER_INPUTS } from '@/lib/Monsters';
 import { MONSTER_PHASES_BY_ID } from '@/lib/constants';
 import { EquipmentPiece, PlayerEquipment } from '@/types/Player';
-import { Monster } from '@/types/Monster';
+import { BurnImmunity, Monster } from '@/types/Monster';
 import { MonsterAttribute } from '@/enums/MonsterAttribute';
+import { isCombatStyleType } from '@/types/PlayerCombatStyle';
 import { CUSTOM_NAME } from '../custom';
 import type { CustomMonster } from '../worker/protocol';
 import type { Needs } from '../requirements';
 import itemRows from '../data/items.json';
-import monsterRows from '../data/fights.json';
 
 export type Slot = keyof PlayerEquipment;
 export const SLOTS: Slot[] = ['head', 'cape', 'neck', 'ammo', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'];
@@ -41,17 +42,6 @@ export interface Item {
   needs: Needs;
 }
 
-export interface MonsterEntry {
-  key: string;
-  name: string;
-  /** Tells apart two fights with the same name, or '' when there is only one. */
-  label: string;
-  level: number;
-  image: string;
-  slayer: boolean;
-  boss: boolean;
-  monster: Monster;
-}
 
 const pieces = new Map(availableEquipment.map((e) => [e.id, e]));
 
@@ -71,9 +61,49 @@ export const items: Item[] = (itemRows as {
 
 export const itemById = new Map(items.map((i) => [i.piece.id, i]));
 
-// The engine lists Jhallan twice under one id and version, the second time as a 1-hitpoint form
-// the site leaves out, so only fights with more than 1 hitpoint are looked up.
-const engineMonsters = new Map(getMonsters().filter((m) => m.skills.hp > 1).map((m) => [`${m.id}:${m.version}`, m]));
+/** A monster as the engine's list stores it. */
+export interface MonsterRow {
+  id: number;
+  name: string;
+  version: string;
+  image: string;
+  size: number;
+  speed: number;
+  style: string[] | null;
+  max_hit: string | number;
+  skills: Monster['skills'];
+  offensive: Monster['offensive'];
+  defensive: Monster['defensive'];
+  attributes: string[];
+  weakness: unknown;
+  immunities: { burn: string | null };
+  is_slayer_monster: boolean;
+}
+
+/** The engine's getMonsters() for one monster. tests/data.test.ts checks they agree. */
+export const fromRow = (m: MonsterRow): Omit<Monster, 'inputs'> => {
+  const maxHit = parseInt(m.max_hit.toString());
+  const styleStr = m.style?.join(',').toLowerCase() || null;
+  return {
+    id: m.id,
+    name: m.name,
+    version: m.version,
+    image: m.image,
+    size: m.size,
+    speed: m.speed,
+    style: isCombatStyleType(styleStr) ? styleStr : null,
+    maxHit: Number.isNaN(maxHit) ? 0 : maxHit,
+    skills: m.skills,
+    offensive: m.offensive,
+    defensive: m.defensive,
+    attributes: m.attributes as MonsterAttribute[],
+    weakness: <Monster['weakness']>m.weakness || null,
+    immunities: {
+      burn: m.immunities.burn as BurnImmunity | null,
+    },
+    is_slayer_monster: m.is_slayer_monster || false,
+  };
+};
 
 // A fight with phases starts in the first, as the Wiki calculator picks. Yama's third phase gets
 // none: the engine means to leave it alone but would set its magic defence to 60, and the Wiki
@@ -82,42 +112,24 @@ const phaseOf = (m: Omit<Monster, 'inputs'>): string | undefined => (m.name === 
   ? undefined
   : MONSTER_PHASES_BY_ID[m.id]?.[0]);
 
-export const monsters: MonsterEntry[] = (monsterRows as {
-  id: number, version: string, name: string, label: string, level: number, image: string, slayer?: 1, boss?: 1,
-}[]).map((row) => {
-  const key = `${row.id}:${row.version}`;
-  const base = engineMonsters.get(key)!;
-  return {
-    key,
-    name: row.name,
-    label: row.label,
-    level: row.level,
-    image: row.image,
-    slayer: row.slayer === 1,
-    boss: row.boss === 1,
-    monster: { ...base, inputs: { ...INITIAL_MONSTER_INPUTS, monsterCurrentHp: base.skills.hp, phase: phaseOf(base) } },
-  };
+/** The engine's monster at the start of a fight, at full hitpoints. */
+export const inFight = (base: Omit<Monster, 'inputs'>): Monster => ({
+  ...base, inputs: { ...INITIAL_MONSTER_INPUTS, monsterCurrentHp: base.skills.hp, phase: phaseOf(base) },
 });
 
-export const monsterByKey = new Map(monsters.map((m) => [m.key, m]));
-
 /**
- * The engine's monster for a Custom monster. It gets an id and name no fight has, so the engine
+ * The engine's monster for a Custom monster, from the fight it copies. It gets an id and name no fight has, so the engine
  * applies none of the copied fight's scaling or mechanics, and no Xerician scaling either.
  */
-export const customMonster = (c: CustomMonster): Monster => {
-  const base = monsterByKey.get(c.from)?.monster;
-  if (!base) throw new Error(`Unknown monster ${c.from}`);
-  return {
-    ...base,
-    id: -1,
-    name: CUSTOM_NAME,
-    version: '',
-    size: c.size,
-    skills: { ...base.skills, hp: c.hp, def: c.def, magic: c.magic },
-    defensive: { ...c.defence, flat_armour: c.armour },
-    weakness: c.weakness,
-    attributes: c.attributes.filter((a) => a !== MonsterAttribute.XERICIAN) as MonsterAttribute[],
-    inputs: { ...INITIAL_MONSTER_INPUTS, monsterCurrentHp: c.hp },
-  };
-};
+export const customMonster = (c: CustomMonster, base: Monster): Monster => ({
+  ...base,
+  id: -1,
+  name: CUSTOM_NAME,
+  version: '',
+  size: c.size,
+  skills: { ...base.skills, hp: c.hp, def: c.def, magic: c.magic },
+  defensive: { ...c.defence, flat_armour: c.armour },
+  weakness: c.weakness,
+  attributes: c.attributes.filter((a) => a !== MonsterAttribute.XERICIAN) as MonsterAttribute[],
+  inputs: { ...INITIAL_MONSTER_INPUTS, monsterCurrentHp: c.hp },
+});
