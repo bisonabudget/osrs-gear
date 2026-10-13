@@ -55,6 +55,8 @@ const POTION_IMAGES: Record<string, string> = {
   'Ranging potion': 'Ranging potion(4)',
   'Saturated heart': 'Saturated heart',
   'Magic potion': 'Magic potion(4)',
+  'Smelling salts': 'Smelling salts (2)',
+  'Overload (+)': 'Overload (+)(4)',
 };
 
 interface Props {

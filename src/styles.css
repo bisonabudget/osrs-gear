@@ -609,7 +609,7 @@ p { margin: 0; }
   width: 26px;
   height: 22px;
   flex: none;
-  background: url('https://oldschool.runescape.wiki/images/Coins_10000.png') center / contain no-repeat;
+  background: url('/img/wiki/Coins_10000.png') center / contain no-repeat;
 }
 
 .budget-row input {

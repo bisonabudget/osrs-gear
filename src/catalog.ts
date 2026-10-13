@@ -1,6 +1,7 @@
 // What the page needs to show items and monsters, without the engine's data.
 import itemRows from './data/items.json';
 import monsterRows from './data/monsters.json';
+import wikiImageRows from './data/wiki-images.json';
 import { CUSTOM_ATTRIBUTES, CUSTOM_KEY, CUSTOM_NAME } from './custom';
 import type { CustomMonster, Defence, Element, Slot } from './worker/protocol';
 
@@ -112,13 +113,17 @@ export const customInfo = (c: CustomMonster): MonsterInfo => {
   };
 };
 
-const CDN = 'https://tools.runescape.wiki/osrs-dps/cdn';
+// Pictures are kept on the site by scripts/fetch-images.ts. Wiki icons it didn't save still load
+// from the Wiki.
 const WIKI = 'https://oldschool.runescape.wiki';
 const title = (name: string) => encodeURIComponent(name.replace(/ /g, '_'));
+const savedIcons = new Set<string>(wikiImageRows);
 
-export const itemImage = (image: string) => `${CDN}/equipment/${encodeURIComponent(image)}`;
-export const monsterImage = (image: string) => `${CDN}/monsters/${encodeURIComponent(image)}`;
-export const wikiImage = (name: string) => `${WIKI}/images/${title(name)}.png`;
+export const itemImage = (image: string) => `img/equipment/${encodeURIComponent(image)}`;
+export const monsterImage = (image: string) => `img/monsters/${encodeURIComponent(image)}`;
+// Saved icons spell out + in their file names, as some servers don't read an encoded + in a path.
+const savedFile = (name: string) => encodeURIComponent(name.replace(/ /g, '_').replace(/\+/g, 'plus'));
+export const wikiImage = (name: string) => (savedIcons.has(name) ? `img/wiki/${savedFile(name)}.png` : `${WIKI}/images/${title(name)}.png`);
 export const wikiPage = (name: string) => `${WIKI}/w/${title(name)}`;
 
 /** Monsters whose name contains the search, closest matches first. */
