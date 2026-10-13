@@ -1,4 +1,5 @@
-# Builds the site and puts it on GitHub Pages on every push to main.
+# Checks the site and the Worker, then builds the site and puts it on GitHub Pages, on every push
+# to main. If a test or the typecheck fails, nothing goes live.
 name: Pages
 
 on:
@@ -16,7 +17,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit -p .
+      - run: npx vitest run tests
+      - run: npm ci
+        working-directory: api
+      - run: npx tsc --noEmit -p .
+        working-directory: api
+      - run: npx vitest run
+        working-directory: api
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
