@@ -634,6 +634,9 @@ export class Optimiser {
     if (room < 0) return { plain: 0, bound: 0 };
     const { a, s } = this.frontier(task.type, task.slots, budget).bounds(room);
     const plain = this.value(task, { items: new Map(), cost: 0 }, task.slots, a, s) * TASK_SLACK;
+    // A task that does nothing with its best plain gear is dropped whatever special items add, so
+    // they aren't tried. Melee against Zulrah is hundreds of these.
+    if (!(plain > 0)) return { plain: 0, bound: 0 };
     let boost = Math.max(1, ...this.setsFor(task).map((x) => x.ratio));
     for (const found of this.singlesFor(task).values()) boost *= found[0].ratio;
     if (protective.length) boost *= Math.max(...protective.map((x) => x.ratio));

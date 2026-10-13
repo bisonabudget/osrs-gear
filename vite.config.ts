@@ -39,9 +39,18 @@ const securityPolicy = (api: string): Plugin => ({
   },
 });
 
+// Opens the connection to the Worker while the page is still loading, so the prices arrive sooner.
+const preconnect = (api: string): Plugin => ({
+  name: 'preconnect',
+  apply: 'build',
+  transformIndexHtml: () => [{ tag: 'link', attrs: { rel: 'preconnect', href: api, crossorigin: true }, injectTo: 'head' }],
+});
+
+const apiOrigin = (mode: string) => new URL(loadEnv(mode, process.cwd(), 'VITE_').VITE_API ?? 'https://api.bisonabudget.com').origin;
+
 export default defineConfig(({ mode }) => ({
   base: './',
-  plugins: [react(), securityPolicy(new URL(loadEnv(mode, process.cwd(), 'VITE_').VITE_API ?? 'https://api.bisonabudget.com').origin)],
+  plugins: [react(), securityPolicy(apiOrigin(mode)), preconnect(apiOrigin(mode))],
   // The engine was written for Next.js, which fills these in.
   define: {
     'process.env.NEXT_PUBLIC_HIT_DIST_SANITY_CHECK': 'undefined',

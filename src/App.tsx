@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { copyOf, customInfo, DEFAULT_MONSTER, monsterInfo, wikiImage } from './catalog';
 import type { MonsterInfo } from './catalog';
 import { CUSTOM_KEY } from './custom';
@@ -29,6 +29,7 @@ import { ThemeButton } from './ui/ThemeButton';
 import { Upgrades } from './ui/Upgrades';
 import { Img } from './ui/Img';
 import { Spinner, Updating } from './ui/Spinner';
+import { picturesOf, preload } from './ui/preload';
 
 // Ko-fi page for the footer's tip link. Left empty, the link stays hidden.
 const DONATE_URL = 'https://ko-fi.com/bisonabudget';
@@ -130,14 +131,21 @@ export const App = () => {
   const [shownFor, setShownFor] = useState('');
   const busy = !error && shownFor !== asked;
 
+  // The monster last searched. The first search and one for a new monster start at once; other
+  // changes, like typing a budget, wait a moment for the next key.
+  const searched = useRef<string | null>(null);
+
   useEffect(() => {
     let stale = false;
     const askedFor = monster;
     const timer = setTimeout(() => {
+      searched.current = askedFor.key;
       const reply = custom
         ? ask({ kind: 'evaluate', ...common, budget, setup: custom })
         : ask({ kind: 'best', ...common, budget });
-      reply.then((o) => {
+      reply.then(async (o) => {
+        // A new setup waits for its pictures, so it appears whole. A slow one holds it up a second at most.
+        if (o && !stale) await preload(picturesOf(o), 1000);
         if (stale) return;
         setOutcome(o);
         setOutcomeFor(askedFor);
@@ -148,7 +156,7 @@ export const App = () => {
         if (stale) return;
         setError(e.message);
       });
-    }, 150);
+    }, searched.current === monster.key ? 150 : 0);
     return () => {
       stale = true;
       clearTimeout(timer);

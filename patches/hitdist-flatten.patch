@@ -1,0 +1,28 @@
+--- a/src/lib/HitDist.ts
++++ b/src/lib/HitDist.ts
+@@ -164,6 +164,25 @@
+    * Merges the probabilities of hits with identical damage values
+    */
+   public flatten(): HitDistribution {
++    // osrs-gear patch: when every hit is one hitsplat of whole damage, its hash is a plain number
++    // (damage * 2, plus 1 if accurate), which is far quicker than a bigint and merges the same
++    // hits in the same order.
++    if (this.hits.every((h) => h.hitsplats.length === 1 && Number.isInteger(h.hitsplats[0].damage))) {
++      const single = new Map<number, [number, Hitsplat[]]>();
++      for (const hit of this.hits) {
++        const splat = hit.hitsplats[0];
++        const hash = splat.damage * 2 + (splat.accurate ? 1 : 0);
++        const prev = single.get(hash);
++        if (prev === undefined) single.set(hash, [hit.probability, hit.hitsplats]);
++        else prev[0] += hit.probability;
++      }
++      const d = new HitDistribution([]);
++      for (const [prob, hitsplats] of single.values()) {
++        if (prob > 0) d.addHit(new WeightedHit(prob, hitsplats));
++      }
++      return d;
++    }
++
+     const acc = new Map<bigint, number>();
+     const hitLists = new Map<bigint, Hitsplat[]>();
+     for (const hit of this.hits) {

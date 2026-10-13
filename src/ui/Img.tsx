@@ -46,7 +46,12 @@ const Picture = ({ src, className, ...rest }: Props) => {
       src={waiting ? BLANK : tries[attempt]}
       className={[className, `pic-${state}`].filter(Boolean).join(' ')}
       onLoad={(e) => { if (e.currentTarget.src !== BLANK) setState('loaded'); }}
-      onError={(e) => { if (e.currentTarget.src !== BLANK) failed(); }}
+      onError={(e) => {
+        if (e.currentTarget.src === BLANK) return;
+        // Blanked at once, so the browser never draws its broken picture icon before React catches up.
+        e.currentTarget.src = BLANK;
+        failed();
+      }}
     />
   );
 };

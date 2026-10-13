@@ -6,6 +6,7 @@ import type { Character } from '../hiscores';
 import type { Bonuses, Outcome, Skills, Slot, SlotOption } from '../worker/protocol';
 import { Coins } from './Coins';
 import { Img } from './Img';
+import { preload } from './preload';
 
 type Tab = 'combat' | 'skills' | 'quests' | 'gear' | 'prayer' | 'magic';
 
@@ -187,6 +188,9 @@ const EquipmentStats = ({ outcome: { stats } }: { outcome: Outcome }) => (
   </section>
 );
 
+// About as many rows as the list shows before scrolling.
+const FIRST_ROWS = 10;
+
 const SlotList = ({ slot, current, load, onClose, onChoose }: {
   slot: Slot,
   current: number | undefined,
@@ -199,7 +203,14 @@ const SlotList = ({ slot, current, load, onClose, onChoose }: {
   useEffect(() => {
     let stale = false;
     setOptions(null);
-    load(slot).then((o) => !stale && setOptions(o)).catch(() => !stale && setOptions([]));
+    load(slot).then(async (o) => {
+      // The rows on screen when the list opens show with their pictures already in.
+      await preload(o.slice(0, FIRST_ROWS).flatMap((x) => {
+        const item = itemInfo.get(x.itemId);
+        return item ? [itemImage(item.image)] : [];
+      }), 600);
+      if (!stale) setOptions(o);
+    }).catch(() => !stale && setOptions([]));
     return () => {
       stale = true;
     };

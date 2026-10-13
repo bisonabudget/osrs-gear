@@ -61,7 +61,8 @@ const STACKS: Record<string, string> = {
   'Sunfire splinters': 'Sunfire splinters 4',
 };
 
-const useImage = (use: Use) => {
+/** The picture of something a setup uses up. */
+export const supplyImage = (use: Use) => {
   const item = use.id === null ? undefined : itemInfo.get(use.id);
   if (item) return itemImage(item.image);
   return wikiImage(STACKS[use.name] ?? use.name);
@@ -77,7 +78,7 @@ const Supplies = ({ setup }: { setup: SetupView }) => {
       <ul className="bill">
         {uses.map((u) => (
           <li key={`${u.kind}|${u.id ?? u.name}`}>
-            <Img src={useImage(u)} alt="" />
+            <Img src={supplyImage(u)} alt="" />
             <span className="bill-name">
               {u.name}
               <small className="bill-from">{formatAmount(u.perHour)} an hour</small>

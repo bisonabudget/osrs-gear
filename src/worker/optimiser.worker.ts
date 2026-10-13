@@ -15,7 +15,10 @@ import type {
   CharacterInput, CustomMonster, Outcome, Reply, Request, Results, SetupRef, SetupView, SlotOption, Stats,
 } from './protocol';
 
-let prices: Promise<Map<number, Price>> | null = null;
+// Prices start loading as soon as the worker does, alongside the page's first search. If they
+// fail, the next search fetches them again.
+let prices: Promise<Map<number, Price>> | null = fetchPrices();
+prices.catch(() => {});
 
 // The last few monster and character pairs searched, since each keeps what it has worked out.
 const optimisers = new Map<string, Optimiser>();

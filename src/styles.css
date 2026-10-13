@@ -1041,6 +1041,16 @@ img.pic-loading {
   animation: pic-wait 0.01s 0.3s both;
 }
 @keyframes pic-wait { from { background-size: 0 0; } }
+/* Item pictures and some icons take their size from the picture, so until it arrives they have no
+   box to show the spinner in. One still loading gets the box it usually fills. */
+.slot img.pic-loading { width: 36px; height: 36px; }
+.slot-list li img.pic-loading { width: 25px; height: 25px; }
+.upgrade-icon img.pic-loading,
+.combat-weapon img.pic-loading { width: 30px; height: 30px; }
+.bill img.pic-loading { width: 28px; height: 28px; }
+.osrs-tabs img.pic-loading { width: 24px; height: 24px; }
+.stat-group img.pic-loading { width: 20px; }
+.brand img.pic-loading { height: 28px; }
 img.pic-loaded { animation: pic-in 0.15s ease-out; }
 @keyframes pic-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { img.pic-loaded { animation: none; } }
