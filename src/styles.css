@@ -955,6 +955,52 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 .results.busy, .compare.busy, .osrs-body.busy, .upgrades.busy { pointer-events: none; }
 .osrs-body.busy, .upgrades.busy { opacity: 0.5; transition-delay: 0.15s; }
 
+/* "Updating for …" over the results on show until the new setup is found */
+.col-results { position: relative; }
+.updating {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: var(--shadow-lift);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: updating-in 0.2s 0.15s ease-out both;
+}
+@keyframes updating-in { from { opacity: 0; transform: translate(-50%, -4px); } }
+
+/* A gold coin turning over, the spinner for anything still being worked out */
+.coin-spin {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid #b8860b;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3b0, #f2c230 45%, #c9971a);
+  animation: coin-turn 0.9s linear infinite;
+}
+.updating .coin-spin { margin-right: 0; }
+@keyframes coin-turn {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coin-spin { animation: pulse 1.2s ease-in-out infinite; }
+  .updating { animation: none; }
+}
+
 /* A thin bar across the top of the page while a setup is worked out */
 .loading-bar {
   position: fixed;
@@ -985,8 +1031,16 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
   .loading-bar::before { width: 100%; animation: pulse 1.2s ease-in-out infinite; }
 }
 
-/* Pictures stay hidden until they've loaded (see ui/Img.tsx). !important beats faded slot icons. */
-img.pic-loading, img.pic-failed { opacity: 0 !important; }
+/* Pictures stay hidden until they've loaded (see ui/Img.tsx). !important beats faded slot icons.
+   One still loading is moved out of its own box, which shows a spinner instead after a moment. */
+img.pic-failed { opacity: 0 !important; }
+img.pic-loading {
+  color: transparent;
+  object-position: -9999px 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='7' fill='none' stroke='%23ea7a2b' stroke-width='2.5' stroke-linecap='round' stroke-dasharray='30 14'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 10 10' to='360 10 10' dur='0.8s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E") center / min(18px, 70%) no-repeat;
+  animation: pic-wait 0.01s 0.3s both;
+}
+@keyframes pic-wait { from { background-size: 0 0; } }
 img.pic-loaded { animation: pic-in 0.15s ease-out; }
 @keyframes pic-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { img.pic-loaded { animation: none; } }

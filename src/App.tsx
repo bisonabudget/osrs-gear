@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { copyOf, customInfo, DEFAULT_MONSTER, monsterInfo, wikiImage } from './catalog';
+import type { MonsterInfo } from './catalog';
 import { CUSTOM_KEY } from './custom';
 import type { Character } from './hiscores';
 import { eitherOf } from './format';
@@ -27,6 +28,7 @@ import { RsnBox } from './ui/RsnBox';
 import { ThemeButton } from './ui/ThemeButton';
 import { Upgrades } from './ui/Upgrades';
 import { Img } from './ui/Img';
+import { Spinner, Updating } from './ui/Spinner';
 
 // Ko-fi page for the footer's tip link. Left empty, the link stays hidden.
 const DONATE_URL = 'https://ko-fi.com/bisonabudget';
@@ -117,16 +119,20 @@ export const App = () => {
 
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   // The monster the outcome is for, which lags behind for a moment after picking another.
-  const [outcomeFor, setOutcomeFor] = useState('');
+  const [outcomeFor, setOutcomeFor] = useState<MonsterInfo>(monster);
   const [nothing, setNothing] = useState(false);
-  const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Bumped by "Try again" to run the search once more after it failed.
   const [tries, setTries] = useState(0);
+  // What was asked for the outcome on show. Until it matches what is picked now, everything shown
+  // is marked as updating, from the moment anything changes.
+  const asked = JSON.stringify([common, budget, custom]);
+  const [shownFor, setShownFor] = useState('');
+  const busy = !error && shownFor !== asked;
 
   useEffect(() => {
     let stale = false;
-    setBusy(true);
+    const askedFor = monster;
     const timer = setTimeout(() => {
       const reply = custom
         ? ask({ kind: 'evaluate', ...common, budget, setup: custom })
@@ -134,14 +140,13 @@ export const App = () => {
       reply.then((o) => {
         if (stale) return;
         setOutcome(o);
-        setOutcomeFor(common.monster);
+        setOutcomeFor(askedFor);
         setNothing(o === null);
         setError(null);
-        setBusy(false);
+        setShownFor(asked);
       }).catch((e: Error) => {
         if (stale) return;
         setError(e.message);
-        setBusy(false);
       });
     }, 150);
     return () => {
@@ -162,7 +167,7 @@ export const App = () => {
     if (total > budget) setBudget(total);
     else setEdited({ inputs, setup: upgrade.setup });
   };
-  const current = outcome && !nothing && outcomeFor === monster.key ? outcome : null;
+  const current = outcome && !nothing && outcomeFor.key === monster.key ? outcome : null;
   // The monster's stats as the setup on show fights them, after raid scaling and drains.
   const foeStats = current?.stats.foe;
   const foe = foeStats
@@ -357,7 +362,8 @@ export const App = () => {
               {guard && guard.items.length > 0 && ` It needs ${eitherOf(guard.items)} in the ${guard.slot} slot, which your levels may not allow.`}
             </p>
           )}
-          {!error && !outcome && busy && <p className="working">Loading today's prices and finding the best setup…</p>}
+          {!error && !outcome && busy && <p className="working"><Spinner />Loading today's prices and finding the best setup…</p>}
+          {!error && outcome && busy && <Updating monster={monster.name} />}
           {!error && !nothing && outcome && kept && keptNow && current && (
             <Compare
               kept={keptNow}
@@ -369,9 +375,9 @@ export const App = () => {
               onStop={() => setKept(null)}
             />
           )}
-          {!error && !nothing && outcome && kept && !(keptNow && current) && <p className="working">Working out the kept setup…</p>}
+          {!error && !nothing && outcome && kept && !(keptNow && current) && <p className="working"><Spinner />Working out the kept setup…</p>}
           {!error && !nothing && outcome && !kept && (
-            <Results outcome={outcome} monster={monster} budget={budget} busy={busy} onKeep={() => setKept(toRef(outcome.setup))} />
+            <Results outcome={outcome} monster={outcomeFor} budget={budget} busy={busy} onKeep={() => setKept(toRef(outcome.setup))} />
           )}
         </section>
       </main>
