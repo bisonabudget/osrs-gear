@@ -4,6 +4,7 @@ import { eitherOf, formatGp, formatPercent, formatSeconds } from '../format';
 import { protectionFor } from '../protection';
 import type { Outcome, SetupView, Slot } from '../worker/protocol';
 import { Coins } from './Coins';
+import { Img } from './Img';
 
 const ORDER: Slot[] = ['weapon', 'ammo', 'head', 'cape', 'neck', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'];
 const SLOT_NAMES: Record<Slot, string> = {
@@ -60,7 +61,7 @@ const Item = ({ setup, slot }: { setup: SetupView, slot: Slot }) => {
   if (!item) return <span className="compare-item empty">Nothing</span>;
   return (
     <span className="compare-item">
-      <img src={itemImage(item.image)} alt="" />
+      <Img src={itemImage(item.image)} alt="" />
       <span>{item.name}</span>
     </span>
   );

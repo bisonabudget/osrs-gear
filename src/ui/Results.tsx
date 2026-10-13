@@ -5,6 +5,7 @@ import {
 } from '../format';
 import type { Outcome, SetupView, Slot, Use } from '../worker/protocol';
 import { Coins, Untradeable } from './Coins';
+import { Img } from './Img';
 
 const ORDER: Slot[] = ['weapon', 'ammo', 'head', 'cape', 'neck', 'body', 'shield', 'legs', 'hands', 'feet', 'ring'];
 type Part = { outcome: Outcome };
@@ -22,7 +23,7 @@ const Headline = ({ outcome: { stats }, monster }: Part & { monster: MonsterInfo
         </p>
       )}      {weakness && (
         <p className="edge">
-          <img src={wikiImage(`${weakness.element[0].toUpperCase()}${weakness.element.slice(1)} rune`)} alt="" />
+          <Img src={wikiImage(`${weakness.element[0].toUpperCase()}${weakness.element.slice(1)} rune`)} alt="" />
           Uses its {weakness.element} weakness for {weakness.severity}% more accuracy and damage
         </p>
       )}
@@ -35,7 +36,7 @@ const Figures = ({ outcome: { stats } }: Part) => (
     <div className="figure">
       <p className="label">Max hit</p>
       <div className="hitsplat">
-        <img src={wikiImage('Damage hitsplat')} alt="" />
+        <Img src={wikiImage('Damage hitsplat')} alt="" />
         <span>{stats.maxHit}</span>
       </div>
     </div>
@@ -76,7 +77,7 @@ const Supplies = ({ setup }: { setup: SetupView }) => {
       <ul className="bill">
         {uses.map((u) => (
           <li key={`${u.kind}|${u.id ?? u.name}`}>
-            <img src={useImage(u)} alt="" />
+            <Img src={useImage(u)} alt="" />
             <span className="bill-name">
               {u.name}
               <small className="bill-from">{formatAmount(u.perHour)} an hour</small>
@@ -114,7 +115,7 @@ const Bill = ({ outcome: { setup }, monster }: Part & { monster: MonsterInfo }) 
       const earned = item.untradeable && !made;
       return (
         <li key={slot}>
-          <img src={itemImage(item.image)} alt="" />
+          <Img src={itemImage(item.image)} alt="" />
           <span className="bill-name">
             {item.name}
             {made && <small className="bill-from">{made}</small>}
@@ -130,14 +131,14 @@ const Bill = ({ outcome: { setup }, monster }: Part & { monster: MonsterInfo }) 
     })}
     {setup.dart !== null && itemInfo.get(setup.dart) && (
       <li>
-        <img src={itemImage(itemInfo.get(setup.dart)!.image)} alt="" />
+        <Img src={itemImage(itemInfo.get(setup.dart)!.image)} alt="" />
         <span className="bill-name">{itemInfo.get(setup.dart)!.name}</span>
         <span className="note">In ammo cost</span>
       </li>
     )}
     {protection?.held && (
       <li>
-        <img src={wikiImage(protection.held)} alt="" />
+        <Img src={wikiImage(protection.held)} alt="" />
         <span className="bill-name">
           {protection.held}
           <small className="bill-from">Held in the shield slot, needed against {protection.against}</small>

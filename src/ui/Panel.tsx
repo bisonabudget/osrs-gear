@@ -5,6 +5,7 @@ import { formatGp, listOf } from '../format';
 import type { Character } from '../hiscores';
 import type { Bonuses, Outcome, Skills, Slot, SlotOption } from '../worker/protocol';
 import { Coins } from './Coins';
+import { Img } from './Img';
 
 type Tab = 'combat' | 'skills' | 'quests' | 'gear' | 'prayer' | 'magic';
 
@@ -66,9 +67,11 @@ interface Props {
   onSkills: (skills: Skills) => void;
   loadSlot: (slot: Slot) => Promise<SlotOption[]>;
   onChoose: (option: SlotOption) => void;
+  /** A new setup is being worked out, so the one on show is about to change. */
+  busy: boolean;
 }
 
-export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Props) => {
+export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose, busy }: Props) => {
   const [tab, setTab] = useState<Tab>('gear');
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
   const [showStats, setShowStats] = useState(false);
@@ -89,11 +92,12 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Pr
               setOpenSlot(null);
             }}
           >
-            <img src={wikiImage(t.icon)} alt={t.label} />
+            <Img src={wikiImage(t.icon)} alt={t.label} />
           </button>
         ))}
       </div>
-      <div className="osrs-body" role="tabpanel">
+      {/* Levels stay editable while a new setup is worked out. */}
+      <div className={`osrs-body${busy && tab !== 'skills' ? ' busy' : ''}`} role="tabpanel" aria-busy={busy}>
         {tab === 'gear' && (openSlot
           ? <SlotList slot={openSlot} current={outcome?.setup.items[openSlot]} load={loadSlot} onClose={() => setOpenSlot(null)} onChoose={(o) => { onChoose(o); setOpenSlot(null); }} />
           : showStats && outcome
@@ -118,9 +122,9 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Pr
           <div className="osrs-note">
             <p className="osrs-title">Prayer and potion</p>
             {outcome.stats.prayers.length
-              ? outcome.stats.prayers.map((p) => <div key={p} className="boost"><img src={wikiImage(p)} alt="" />{p}</div>)
+              ? outcome.stats.prayers.map((p) => <div key={p} className="boost"><Img src={wikiImage(p)} alt="" />{p}</div>)
               : <p>No combat prayer at this Prayer level.</p>}
-            <div className="boost"><img src={wikiImage(POTION_IMAGES[outcome.stats.potion] ?? outcome.stats.potion)} alt="" />{outcome.stats.potion}</div>
+            <div className="boost"><Img src={wikiImage(POTION_IMAGES[outcome.stats.potion] ?? outcome.stats.potion)} alt="" />{outcome.stats.potion}</div>
             <p className="osrs-small">The best prayer your Prayer and Defence levels allow and the best potion for the style are assumed.</p>
             {outcome.stats.effects.length > 0 && <p className="osrs-small">Also counting {listOf(outcome.stats.effects)}.</p>}
           </div>
@@ -129,7 +133,7 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose }: Pr
           <div className="osrs-note">
             <p className="osrs-title">Spell</p>
             {outcome.setup.spell
-              ? <div className="boost"><img src={wikiImage(outcome.setup.spell)} alt="" />{outcome.setup.spell}</div>
+              ? <div className="boost"><Img src={wikiImage(outcome.setup.spell)} alt="" />{outcome.setup.spell}</div>
               : <p>This setup doesn't cast spells.</p>}
           </div>
         )}
@@ -154,7 +158,7 @@ const WornEquipment = ({ outcome, onOpen }: { outcome: Outcome | null, onOpen: (
           title={item ? `${item.name}${price ? ` (${formatGp(price)})` : item.untradeable ? ' (untradeable)' : ''}` : `${SLOT_NAMES[slot]} slot`}
           aria-label={item ? `${SLOT_NAMES[slot]}: ${item.name}` : `${SLOT_NAMES[slot]} slot, empty`}
         >
-          <img src={item ? itemImage(item.image) : wikiImage(`${SLOT_NAMES[slot]} slot`)} alt="" className={item ? '' : 'ghost'} />
+          <Img src={item ? itemImage(item.image) : wikiImage(`${SLOT_NAMES[slot]} slot`)} alt="" className={item ? '' : 'ghost'} />
         </button>
       );
     })}
@@ -229,7 +233,7 @@ const SlotList = ({ slot, current, load, onClose, onChoose }: {
           return (
             <li key={o.itemId}>
               <button type="button" className={o.itemId === current ? 'current' : ''} onClick={() => onChoose(o)}>
-                <img src={itemImage(item.image)} alt="" loading="lazy" />
+                <Img src={itemImage(item.image)} alt="" loading="lazy" />
                 <span className="slot-item-name">
                   {item.name}
                   {alike.length > 0 && (
@@ -259,7 +263,7 @@ const CombatTab = ({ outcome }: { outcome: Outcome | null }) => {
   return (
     <div className="osrs-note">
       <div className="combat-weapon">
-        {weapon && <img src={itemImage(weapon.image)} alt="" />}
+        {weapon && <Img src={itemImage(weapon.image)} alt="" />}
         <span>{weapon?.name ?? 'Unarmed'}</span>
       </div>
       <dl className="osrs-facts">
@@ -311,7 +315,7 @@ const SkillsTab = ({ skills, rsn, onSkills }: { skills: Skills, rsn: Props['rsn'
     <div className="skills">
       {SKILLS.map((s) => (
         <label key={s.id} className="skill" title={s.name}>
-          <img src={wikiImage(`${s.name} icon`)} alt={s.name} />
+          <Img src={wikiImage(`${s.name} icon`)} alt={s.name} />
           <LevelInput value={skills[s.id]} onChange={(level) => onSkills({ ...skills, [s.id]: level })} />
         </label>
       ))}

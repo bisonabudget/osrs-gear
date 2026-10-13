@@ -26,6 +26,7 @@ import { LevelBox } from './ui/LevelBox';
 import { RsnBox } from './ui/RsnBox';
 import { ThemeButton } from './ui/ThemeButton';
 import { Upgrades } from './ui/Upgrades';
+import { Img } from './ui/Img';
 
 // Ko-fi page for the footer's tip link. Left empty, the link stays hidden.
 const DONATE_URL = 'https://ko-fi.com/bisonabudget';
@@ -120,6 +121,8 @@ export const App = () => {
   const [nothing, setNothing] = useState(false);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Bumped by "Try again" to run the search once more after it failed.
+  const [tries, setTries] = useState(0);
 
   useEffect(() => {
     let stale = false;
@@ -145,7 +148,7 @@ export const App = () => {
       stale = true;
       clearTimeout(timer);
     };
-  }, [common, budget, custom]);
+  }, [common, budget, custom, tries]);
 
   const loadSlot = useCallback(
     (slot: Slot) => ask({ kind: 'slot', ...common, setup: toRef(outcome!.setup), slot }),
@@ -198,7 +201,7 @@ export const App = () => {
             aria-pressed={classes.includes(c.id)}
             onClick={() => toggleClass(c.id)}
           >
-            <img src={wikiImage(c.icon)} alt="" />
+            <Img src={wikiImage(c.icon)} alt="" />
             {c.name}
           </button>
         ))}
@@ -225,9 +228,10 @@ export const App = () => {
 
   return (
     <>
+      <div className={`loading-bar${busy ? ' on' : ''}`} role="progressbar" aria-label="Working out the best setup" aria-hidden={!busy} />
       <header className="top">
         <a className="brand" href="./">
-          <img src={wikiImage('Coins 10000')} alt="" />
+          <Img src={wikiImage('Coins 10000')} alt="" />
           <span>BiS on a Budget</span>
         </a>
         <div className="player">
@@ -268,7 +272,7 @@ export const App = () => {
                   onChange={(e) => setTaskChoices({ ...taskChoices, [monster.key]: e.target.checked })}
                 />
                 <span className="switch-track" aria-hidden="true" />
-                <img src={wikiImage('Slayer icon')} alt="" />
+                <Img src={wikiImage('Slayer icon')} alt="" />
                 On a slayer task
               </label>
               {wilderness === 'sometimes' && (
@@ -279,7 +283,7 @@ export const App = () => {
                     onChange={(e) => setWildernessChoices({ ...wildernessChoices, [monster.key]: e.target.checked })}
                   />
                   <span className="switch-track" aria-hidden="true" />
-                  <img src={wikiImage('Skull (status) icon')} alt="" />
+                  <Img src={wikiImage('Skull (status) icon')} alt="" />
                   In the Wilderness
                 </label>
               )}
@@ -287,7 +291,7 @@ export const App = () => {
                 <label className="switch" title="Chambers of Xeric monsters in Challenge Mode have 50% more hitpoints and stronger stats. Worked out for a solo raid.">
                   <input type="checkbox" checked={cm} onChange={(e) => setCm(e.target.checked)} />
                   <span className="switch-track" aria-hidden="true" />
-                  <img src={wikiImage('Olmlet')} alt="" />
+                  <Img src={wikiImage('Olmlet')} alt="" />
                   Challenge Mode
                 </label>
               )}
@@ -336,19 +340,24 @@ export const App = () => {
               <button type="button" onClick={() => setEdited(null)}>Back to best</button>
             </div>
           )}
-          <Panel outcome={nothing ? null : outcome} skills={skills} rsn={rsn} onSkills={setSkills} loadSlot={loadSlot} onChoose={choose} />
-          {outcome && !nothing && <Upgrades outcome={outcome} budget={budget} onTake={takeUpgrade} />}
+          <Panel outcome={nothing ? null : outcome} skills={skills} rsn={rsn} onSkills={setSkills} loadSlot={loadSlot} onChoose={choose} busy={busy} />
+          {outcome && !nothing && <Upgrades outcome={outcome} budget={budget} onTake={takeUpgrade} busy={busy} />}
         </section>
 
         <section className="col col-results" aria-live="polite">
-          {error && <p className="problem">Something went wrong working this out: {error}</p>}
+          {error && (
+            <div className="problem">
+              <p>Something went wrong working this out: {error}</p>
+              <button type="button" className="retry" onClick={() => { setError(null); setTries((t) => t + 1); }}>Try again</button>
+            </div>
+          )}
           {!error && nothing && !busy && (
             <p className="problem">
               Nothing you can use damages {monster.name} for this budget. Try a bigger budget or another combat style.
               {guard && guard.items.length > 0 && ` It needs ${eitherOf(guard.items)} in the ${guard.slot} slot, which your levels may not allow.`}
             </p>
           )}
-          {!error && !outcome && busy && <p className="working">Finding the best setup…</p>}
+          {!error && !outcome && busy && <p className="working">Loading today's prices and finding the best setup…</p>}
           {!error && !nothing && outcome && kept && keptNow && current && (
             <Compare
               kept={keptNow}

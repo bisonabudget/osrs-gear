@@ -119,11 +119,22 @@ const WIKI = 'https://oldschool.runescape.wiki';
 const title = (name: string) => encodeURIComponent(name.replace(/ /g, '_'));
 const savedIcons = new Set<string>(wikiImageRows);
 
-export const itemImage = (image: string) => `img/equipment/${encodeURIComponent(image)}`;
-export const monsterImage = (image: string) => `img/monsters/${encodeURIComponent(image)}`;
+// Each saved picture's address on the Wiki, used if the site's copy fails to load.
+const backups = new Map<string, string>();
+const saved = (src: string, backup: string) => {
+  if (!backups.has(src)) backups.set(src, backup);
+  return src;
+};
+/** The Wiki's copy of a picture the site keeps, if it has one. */
+export const backupOf = (src: string) => backups.get(src) ?? null;
+
+export const itemImage = (image: string) => saved(`img/equipment/${encodeURIComponent(image)}`, `${WIKI}/images/${title(image)}`);
+export const monsterImage = (image: string) => saved(`img/monsters/${encodeURIComponent(image)}`, `${WIKI}/images/${title(image)}`);
 // Saved icons spell out + in their file names, as some servers don't read an encoded + in a path.
 const savedFile = (name: string) => encodeURIComponent(name.replace(/ /g, '_').replace(/\+/g, 'plus'));
-export const wikiImage = (name: string) => (savedIcons.has(name) ? `img/wiki/${savedFile(name)}.png` : `${WIKI}/images/${title(name)}.png`);
+export const wikiImage = (name: string) => (savedIcons.has(name)
+  ? saved(`img/wiki/${savedFile(name)}.png`, `${WIKI}/images/${title(name)}.png`)
+  : `${WIKI}/images/${title(name)}.png`);
 export const wikiPage = (name: string) => `${WIKI}/w/${title(name)}`;
 
 /** Monsters whose name contains the search, closest matches first. */

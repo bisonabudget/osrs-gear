@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { wikiImage } from '../catalog';
 import { type Character, fetchHiscores, HiscoresError, validName } from '../hiscores';
+import { Img } from './Img';
 
 interface Props {
   /** The RSN whose levels are loaded, if any. */
@@ -42,7 +43,7 @@ export const RsnBox = ({ name, onLoad, onForget }: Props) => {
       }}
     >
       <div className={`rsn-field${problem ? ' invalid' : ''}`}>
-        <img src={wikiImage('Stats icon')} alt="" />
+        <Img src={wikiImage('Stats icon')} alt="" />
         <input
           type="text"
           value={draft}

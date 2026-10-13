@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { MonsterInfo, monsterImage, monsterList, searchMonsters } from '../catalog';
+import { Img } from './Img';
 
 interface Props {
   /** The monster picked now, for the random pick to avoid. Without it there's no dice. */
@@ -125,7 +126,7 @@ export const MonsterPicker = ({ monster, onPick, onCustom, customNote, placehold
               onPointerEnter={() => setActive(i)}
               onClick={() => pick(m)}
             >
-              <img src={monsterImage(m.image)} alt="" loading="lazy" />
+              <Img src={monsterImage(m.image)} alt="" loading="lazy" />
               <span className="result-name">
                 {m.name}
                 {m.label && <small>{m.label}</small>}

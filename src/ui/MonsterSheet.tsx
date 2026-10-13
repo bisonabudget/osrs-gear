@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { DEFENCES, MonsterInfo, Offence, Skill, monsterImage, wikiImage } from '../catalog';
 import { listOf } from '../format';
 import type { Defence, Stats } from '../worker/protocol';
+import { Img } from './Img';
 
 export const DEFENCE_INFO: Record<Defence, { name: string, icon: string }> = {
   stab: { name: 'Stab', icon: 'White dagger' },
@@ -47,7 +48,7 @@ const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
 /** The monster's picture, name and combat level. */
 export const MonsterHead = ({ monster, copiedFrom }: { monster: MonsterInfo, copiedFrom?: string }) => (
   <div className="monster-head">
-    <img className="monster-art" key={monster.image} src={monsterImage(monster.image)} alt="" />
+    <Img className="monster-art" key={monster.image} src={monsterImage(monster.image)} alt="" />
     <div>
       <h1 className={`monster-name${monster.name.length > 13 ? ' long' : ''}`}>{monster.name}</h1>
       <p className="monster-level">
@@ -77,7 +78,7 @@ const StatRow = ({ title, cells, half, children }: { title: string, cells: Cell[
     <ul>
       {cells.map((c) => (
         <li key={c.name} className={c.className} title={c.name}>
-          <img src={wikiImage(c.icon)} alt="" />
+          <Img src={wikiImage(c.icon)} alt="" />
           <span className="sr-only">{c.name}</span>
           <span className="stat-value">{c.value}</span>
         </li>
@@ -137,7 +138,7 @@ export const MonsterFacts = ({ monster, stats, spell }: Props) => {
         <StatRow title="Magic defence" half cells={[defenceCell('magic')]} />
         <StatRow title="Weakness" half cells={[]}>
           <li className={`weakness${usesWeakness ? ' used' : ''}`} title={weakness ? `${capital(weakness.element)} weakness` : 'Elemental weakness'}>
-            {weakness && <img src={wikiImage(`${capital(weakness.element)} rune`)} alt="" />}
+            {weakness && <Img src={wikiImage(`${capital(weakness.element)} rune`)} alt="" />}
             <span className="stat-value">{weakness ? `${weakness.severity}%` : 'None'}</span>
           </li>
         </StatRow>

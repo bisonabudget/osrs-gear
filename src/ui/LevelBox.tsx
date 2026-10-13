@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { wikiImage } from '../catalog';
+import { Img } from './Img';
 
 interface Props {
   label: string;
@@ -19,7 +20,7 @@ export const LevelBox = ({ label, icon, title, value, max, step, onChange }: Pro
   useEffect(() => setText(String(value)), [value]);
   return (
     <label className="level-box" title={title}>
-      <img src={wikiImage(icon)} alt="" />
+      <Img src={wikiImage(icon)} alt="" />
       {label}
       <input
         className="stat-input"

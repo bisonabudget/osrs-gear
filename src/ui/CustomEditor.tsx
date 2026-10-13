@@ -4,6 +4,7 @@ import { CUSTOM_ATTRIBUTES } from '../custom';
 import type { CustomMonster, Defence, Element } from '../worker/protocol';
 import { ATTRIBUTES, DEFENCE_INFO } from './MonsterSheet';
 import { MonsterPicker } from './MonsterPicker';
+import { Img } from './Img';
 
 const ELEMENTS: Element[] = ['air', 'water', 'earth', 'fire'];
 const capital = (s: string) => s[0].toUpperCase() + s.slice(1);
@@ -25,7 +26,7 @@ const NumberBox = ({ label, icon, word, value, min, max, onChange }: NumberProps
   useEffect(() => setText(String(value)), [value]);
   return (
     <li title={label}>
-      {icon ? <img src={wikiImage(icon)} alt="" /> : <span className="stat-word">{word}</span>}
+      {icon ? <Img src={wikiImage(icon)} alt="" /> : <span className="stat-word">{word}</span>}
       <input
         className="stat-input"
         type="number"
@@ -86,7 +87,7 @@ export const CustomEditor = ({ custom, onChange, onCopy }: Props) => {
         <Group title="Magic defence" half>{defenceBox('magic')}</Group>
         <Group title="Weakness" half>
           <li title="Elemental weakness">
-            {custom.weakness ? <img src={wikiImage(`${capital(custom.weakness.element)} rune`)} alt="" /> : <span className="stat-word">Element</span>}
+            {custom.weakness ? <Img src={wikiImage(`${capital(custom.weakness.element)} rune`)} alt="" /> : <span className="stat-word">Element</span>}
             <select
               className="stat-input"
               aria-label="Weakness element"
