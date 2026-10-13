@@ -165,6 +165,27 @@ describe('the prices', () => {
     expect(await reply.json()).toEqual({ latest: LATEST, hour: HOUR, hourTime: 3600 });
   });
 
+  test('shares the prices through Cloudflare\'s cache between copies of the Worker', async () => {
+    const kept = new Map<string, Response>();
+    const cache = {
+      match: async (key: Request) => kept.get(key.url)?.clone(),
+      put: async (key: Request, value: Response) => { kept.set(key.url, value); },
+    };
+    const time = { now: 0 };
+    const o = { ...pricesOutside(wiki, time), cache };
+    await handle(askPrices(), env(), o);
+    forget(); // another copy of the Worker, with nothing in memory
+    time.now = 30_000;
+    const reply = await handle(askPrices(), env(), o);
+    expect(reply.headers.get('X-Cache')).toBe('hit');
+    expect(await reply.json()).toEqual({ latest: LATEST, hour: HOUR, hourTime: 3600 });
+    expect(o.fetch).toHaveBeenCalledTimes(2);
+    forget();
+    time.now = 60_000;
+    expect((await handle(askPrices(), env(), o)).headers.get('X-Cache')).toBe('miss');
+    expect(o.fetch).toHaveBeenCalledTimes(4);
+  });
+
   test('says so when the Wiki has never answered', async () => {
     const reply = await handle(askPrices(), env(), pricesOutside(() => Promise.reject(new Error('offline'))));
     expect(reply.status).toBe(502);

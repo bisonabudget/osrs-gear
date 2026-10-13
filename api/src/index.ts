@@ -4,6 +4,7 @@
 //
 // It also passes on the Wiki's Grand Exchange prices, fetched at most once a minute and shared by
 // every visitor, so the Wiki sees one named caller and not each visitor's browser.
+// The site uses its own address, api.bisonabudget.com, where Cloudflare's cache works.
 //
 // Names are kept in memory, which lasts while Cloudflare keeps this copy of the Worker running, and
 // in Cloudflare's cache, which only works once the Worker has its own domain (not on workers.dev).
@@ -77,17 +78,31 @@ const fetchPrices = async (outside: Outside): Promise<string | null> => {
   return JSON.stringify({ latest: latest.data, hour: hour.data, hourTime: hour.timestamp });
 };
 
+const PRICES_KEY = 'https://prices.cache/osrs';
+
+// Prices are kept in memory and in Cloudflare's cache, which every copy of the Worker in a data
+// centre shares, so the Wiki is asked at most once a minute for each data centre.
 const pricesReply = async (outside: Outside, cors: Record<string, string>): Promise<Response> => {
   const now = outside.now();
   let cache = 'hit';
   if (!prices || prices.until <= now) {
-    cache = 'miss';
-    fetchingPrices ??= fetchPrices(outside).finally(() => { fetchingPrices = null; });
-    const body = await fetchingPrices;
-    // If the Wiki doesn't answer, the last prices are better than none.
-    if (body) prices = { body, until: now + PRICES_SECONDS * 1000 };
-    else if (!prices) return json({ error: "The prices didn't answer" }, 502, cors);
-    else cache = 'stale';
+    const kept = await outside.cache.match(new Request(PRICES_KEY));
+    const keptUntil = Number(kept?.headers.get('X-Until'));
+    if (kept && keptUntil > now) {
+      prices = { body: await kept.text(), until: keptUntil };
+    } else {
+      cache = 'miss';
+      fetchingPrices ??= fetchPrices(outside).finally(() => { fetchingPrices = null; });
+      const body = await fetchingPrices;
+      // If the Wiki doesn't answer, the last prices are better than none.
+      if (body) {
+        prices = { body, until: now + PRICES_SECONDS * 1000 };
+        await outside.cache.put(new Request(PRICES_KEY), new Response(body, {
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${PRICES_SECONDS}`, 'X-Until': String(prices.until) },
+        }));
+      } else if (!prices) return json({ error: "The prices didn't answer" }, 502, cors);
+      else cache = 'stale';
+    }
   }
   return new Response(prices.body, {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${PRICES_SECONDS}`, ...cors, 'X-Cache': cache },

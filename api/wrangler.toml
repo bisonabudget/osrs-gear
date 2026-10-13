@@ -4,6 +4,9 @@
 name = "osrs-gear-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
+# The site's address for it, where Cloudflare's cache works. The workers.dev one stays as well.
+routes = [{ pattern = "api.bisonabudget.com", custom_domain = true }]
+workers_dev = true
 
 [vars]
 # The sites allowed to ask, comma-separated.
