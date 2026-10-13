@@ -1,5 +1,6 @@
 # The Cloudflare Worker that fetches the hiscores for the site, since browsers can't read them
-# from another site. Free plan: 100,000 requests a day, and it is never billed.
+# from another site, and shares the Wiki's prices between visitors.
+# Free plan: 100,000 requests a day, and it is never billed.
 name = "osrs-gear-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"

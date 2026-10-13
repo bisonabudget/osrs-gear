@@ -2,14 +2,20 @@
 // so the site asks this Worker instead. Each name is kept for 10 minutes, so looking it up again
 // doesn't reach the hiscores, and each visitor gets a few lookups a minute.
 //
+// It also passes on the Wiki's Grand Exchange prices, fetched at most once a minute and shared by
+// every visitor, so the Wiki sees one named caller and not each visitor's browser.
+//
 // Names are kept in memory, which lasts while Cloudflare keeps this copy of the Worker running, and
 // in Cloudflare's cache, which only works once the Worker has its own domain (not on workers.dev).
 
 const HISCORES = 'https://secure.runescape.com/m=hiscore_oldschool/index_lite.json';
+const PRICES = 'https://prices.runescape.wiki/api/v1/osrs';
 const USER_AGENT = 'osrs-gear (github.com/tristanbowdenfreeman-maker/osrs-gear)';
 // How long a player's levels are kept, and how long "no such player" is.
 const FOUND_SECONDS = 600;
 const MISSING_SECONDS = 60;
+// How long the prices are kept. The Wiki's latest prices change about once a minute.
+const PRICES_SECONDS = 60;
 
 export interface Env {
   ALLOWED_ORIGINS: string;
@@ -49,10 +55,43 @@ const withinLimit = (visitor: string, now: number) => {
   return seen.count <= LOOKUPS_A_MINUTE;
 };
 
-/** Forgets every name and visitor kept in memory, for the tests. */
+// The prices last fetched, and the fetch under way, so visitors arriving together share one.
+let prices: { body: string, until: number } | null = null;
+let fetchingPrices: Promise<string | null> | null = null;
+
+/** Forgets every name, visitor and price kept in memory, for the tests. */
 export const forget = () => {
   memory.clear();
   visitors.clear();
+  prices = null;
+  fetchingPrices = null;
+};
+
+// The latest prices and the last hour's averages, as one reply: { latest, hour, hourTime }.
+const fetchPrices = async (outside: Outside): Promise<string | null> => {
+  const get = (path: string) => outside.fetch(`${PRICES}/${path}`, { headers: { 'User-Agent': USER_AGENT } })
+    .then((r) => (r.ok ? r.json() as Promise<{ data: unknown, timestamp?: number }> : null))
+    .catch(() => null);
+  const [latest, hour] = await Promise.all([get('latest'), get('1h')]);
+  if (!latest || !hour) return null;
+  return JSON.stringify({ latest: latest.data, hour: hour.data, hourTime: hour.timestamp });
+};
+
+const pricesReply = async (outside: Outside, cors: Record<string, string>): Promise<Response> => {
+  const now = outside.now();
+  let cache = 'hit';
+  if (!prices || prices.until <= now) {
+    cache = 'miss';
+    fetchingPrices ??= fetchPrices(outside).finally(() => { fetchingPrices = null; });
+    const body = await fetchingPrices;
+    // If the Wiki doesn't answer, the last prices are better than none.
+    if (body) prices = { body, until: now + PRICES_SECONDS * 1000 };
+    else if (!prices) return json({ error: "The prices didn't answer" }, 502, cors);
+    else cache = 'stale';
+  }
+  return new Response(prices.body, {
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': `max-age=${PRICES_SECONDS}`, ...cors, 'X-Cache': cache },
+  });
 };
 
 /** RuneScape names are 1 to 12 letters, numbers, spaces, hyphens or underscores. */
@@ -72,6 +111,7 @@ export const handle = async (request: Request, env: Env, outside: Outside): Prom
   const url = new URL(request.url);
   const cors = corsHeaders(request.headers.get('Origin'), env);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'Access-Control-Allow-Methods': 'GET' } });
+  if (request.method === 'GET' && url.pathname === '/prices') return pricesReply(outside, cors);
   if (request.method !== 'GET' || url.pathname !== '/hiscores') return json({ error: 'Not found' }, 404, cors);
 
   const name = (url.searchParams.get('player') ?? '').trim();

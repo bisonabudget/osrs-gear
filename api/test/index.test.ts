@@ -115,3 +115,65 @@ describe('the hiscores lookup', () => {
     expect((await handle(ask('Player11'), e, o)).status).toBe(200);
   });
 });
+
+describe('the prices', () => {
+  const LATEST = { 4151: { high: 1500000, highTime: 100, low: 1490000, lowTime: 100 } };
+  const HOUR = { 4151: { avgHighPrice: 1495000, avgLowPrice: 1485000 } };
+  const wiki = (url: string) => Response.json(url.endsWith('/latest') ? { data: LATEST } : { data: HOUR, timestamp: 3600 });
+  const askPrices = () => new Request('https://api.test/prices', { headers: { Origin: SITE } });
+  const pricesOutside = (reply: (url: string) => Response | Promise<Response>, time = { now: 0 }) => {
+    const o = outside(() => new Response(''), time);
+    o.fetch.mockImplementation(async (url: string) => reply(url));
+    return o;
+  };
+
+  test('passes on the latest prices and the last hour, named as the site, with CORS', async () => {
+    const o = pricesOutside(wiki);
+    const reply = await handle(askPrices(), env(), o);
+    expect(reply.status).toBe(200);
+    expect(await reply.json()).toEqual({ latest: LATEST, hour: HOUR, hourTime: 3600 });
+    expect(reply.headers.get('Access-Control-Allow-Origin')).toBe(SITE);
+    expect(reply.headers.get('Cache-Control')).toBe('max-age=60');
+    expect(o.fetch.mock.calls.map((c) => c[0])).toEqual([
+      'https://prices.runescape.wiki/api/v1/osrs/latest',
+      'https://prices.runescape.wiki/api/v1/osrs/1h',
+    ]);
+    expect(o.fetch.mock.calls[0][1].headers['User-Agent']).toContain('osrs-gear');
+  });
+
+  test('asks the Wiki at most once a minute, however many visitors come', async () => {
+    const time = { now: 0 };
+    const o = pricesOutside(wiki, time);
+    await Promise.all([1, 2, 3].map(() => handle(askPrices(), env(), o)));
+    expect((await handle(askPrices(), env(), o)).headers.get('X-Cache')).toBe('hit');
+    expect(o.fetch).toHaveBeenCalledTimes(2);
+    time.now = 60_000;
+    await handle(askPrices(), env(), o);
+    expect(o.fetch).toHaveBeenCalledTimes(4);
+  });
+
+  test('keeps giving the last prices when the Wiki stops answering', async () => {
+    const time = { now: 0 };
+    let up = true;
+    const o = pricesOutside((url) => (up ? wiki(url) : new Response('', { status: 503 })), time);
+    await handle(askPrices(), env(), o);
+    up = false;
+    time.now = 60_000;
+    const reply = await handle(askPrices(), env(), o);
+    expect(reply.status).toBe(200);
+    expect(reply.headers.get('X-Cache')).toBe('stale');
+    expect(await reply.json()).toEqual({ latest: LATEST, hour: HOUR, hourTime: 3600 });
+  });
+
+  test('says so when the Wiki has never answered', async () => {
+    const reply = await handle(askPrices(), env(), pricesOutside(() => Promise.reject(new Error('offline'))));
+    expect(reply.status).toBe(502);
+  });
+
+  test('does not count against the hiscore lookups', async () => {
+    const e = env(10);
+    const o = pricesOutside(wiki);
+    for (let i = 0; i < 20; i += 1) expect((await handle(askPrices(), e, o)).status).toBe(200);
+    expect(e.LOOKUPS!.limit).not.toHaveBeenCalled();
+  });
+});

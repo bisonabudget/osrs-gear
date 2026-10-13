@@ -1,6 +1,9 @@
 // Grand Exchange prices from the Wiki's real-time prices API.
 // https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices
+// On the live site they come through the Cloudflare Worker in api/, which asks the Wiki at most
+// once a minute for every visitor. Locally, or if the Worker doesn't answer, they come from the Wiki.
 const API = 'https://prices.runescape.wiki/api/v1/osrs';
+const SHARED = import.meta.env.VITE_API ? `${import.meta.env.VITE_API}/prices` : null;
 
 export interface Price {
   gp: number;
@@ -34,10 +37,23 @@ export const pickPrices = (
   return prices;
 };
 
-export const fetchPrices = async (): Promise<Map<number, Price>> => {
+interface Prices { latest: Record<string, Latest>, hour: Record<string, Hour>, hourTime: number }
+
+const fromWorker = async (url: string): Promise<Prices> => {
+  const reply = await fetch(url);
+  if (!reply.ok) throw new Error(`Prices: ${reply.status}`);
+  return reply.json() as Promise<Prices>;
+};
+
+const fromWiki = async (): Promise<Prices> => {
   const [latest, hour] = await Promise.all([
     fetch(`${API}/latest`).then((r) => r.json() as Promise<{ data: Record<string, Latest> }>),
     fetch(`${API}/1h`).then((r) => r.json() as Promise<{ data: Record<string, Hour>, timestamp: number }>),
   ]);
-  return pickPrices(latest.data, hour.data, hour.timestamp, Date.now() / 1000);
+  return { latest: latest.data, hour: hour.data, hourTime: hour.timestamp };
+};
+
+export const fetchPrices = async (): Promise<Map<number, Price>> => {
+  const p = SHARED ? await fromWorker(SHARED).catch(fromWiki) : await fromWiki();
+  return pickPrices(p.latest, p.hour, p.hourTime, Date.now() / 1000);
 };
