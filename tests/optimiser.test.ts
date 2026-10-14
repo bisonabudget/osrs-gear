@@ -205,6 +205,24 @@ describe('next upgrades', () => {
     }
   }, 120_000);
 
+  test('when no single item adds DPS, a change of several items is suggested', () => {
+    const o = optimiserFor('Verzik Vitur');
+    const setup = o.optimise(10e6, CLASSES)!;
+    expect(o.upgrades(setup, CLASSES)).toHaveLength(0);
+    const [change, ...rest] = o.suggestions(setup, CLASSES);
+    expect(rest).toHaveLength(0);
+    expect(change.changes!.length).toBeGreaterThan(1);
+    expect(change.gain).toBeGreaterThan(0.01 * setup.dps);
+    expect(change.setup.dps).toBeCloseTo(setup.dps + change.gain, 9);
+    // Raising the budget to what it costs finds at least as much DPS.
+    expect(o.optimise(change.setup.cost, CLASSES)!.dps).toBeGreaterThanOrEqual(change.setup.dps - 1e-9);
+  }, 120_000);
+
+  test('there is no suggestion when the setup already has the most DPS', () => {
+    const o = optimiserFor('Vorkath');
+    expect(o.suggestions(o.optimise(Infinity, CLASSES)!, CLASSES)).toHaveLength(0);
+  }, 120_000);
+
   test('the slot list is sorted by DPS and includes what is worn', () => {
     const o = optimiserFor('Vorkath');
     const setup = o.optimise(10e6, CLASSES)!;

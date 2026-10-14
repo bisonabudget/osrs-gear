@@ -114,6 +114,8 @@ export interface UpgradeView {
   /** Seconds the upgrade takes off each kill, or null when the current setup can't kill. */
   timeSaved: number | null;
   setup: SetupRef;
+  /** Every item worn new, when the upgrade is a whole setup and not one item. */
+  changes: number[] | null;
 }
 
 export interface Outcome {

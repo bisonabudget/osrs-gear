@@ -166,10 +166,11 @@ const outcome = (o: Optimiser, setup: Setup, request: Request): Outcome => {
   return {
     setup: view(o, setup),
     stats,
-    upgrades: o.upgrades(setup, request.classes).map((u) => {
+    upgrades: o.suggestions(setup, request.classes).map((u) => {
       const saved = stats.killTime - evaluate(u.setup, o.monster, o.character, false, o.fightCache).killTime;
       return {
         slot: u.slot, itemId: u.item.piece.id, gain: u.gain, netCost: u.netCost, setup: toRef(u.setup),
+        changes: u.changes?.map((i) => i.piece.id) ?? null,
         timeSaved: Number.isFinite(saved) ? saved : null,
       };
     }),

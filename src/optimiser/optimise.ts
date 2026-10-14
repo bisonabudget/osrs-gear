@@ -36,6 +36,8 @@ const EPS = 1e-9;
 const TASK_SLACK = 1.1;
 // Upgrades adding less than this share of the current DPS only show when there aren't enough bigger ones.
 const MIN_GAIN = 0.01;
+// How many doubled budgets suggestions tries before it looks at any price.
+const SWITCH_STEPS = 4;
 
 // Spells Charge boosts when the matching god cape is worn.
 const GOD_SPELLS = new Set(['Saradomin Strike', 'Claws of Guthix', 'Flames of Zamorak']);
@@ -86,6 +88,8 @@ export interface Swap {
   gain: number;
   /** What the swap costs, after selling the item it replaces. */
   netCost: number;
+  /** Every item worn new, when the change is a whole setup and not one item. */
+  changes?: Item[];
 }
 
 interface Task {
@@ -835,6 +839,47 @@ export class Optimiser {
       const swap = group.find((s) => s.item.piece.id === worn) ?? group[0];
       return { swap, alike: group.filter((s) => s !== swap).map((s) => s.item) };
     });
+  }
+
+  /**
+   * The single swaps most worth buying next, and when there are fewer than `count` of them, the
+   * cheapest setup found with more DPS than any of them. That setup can change several items at
+   * once, such as a set or a different combat style, so it still finds more DPS when no one item
+   * adds any.
+   */
+  suggestions(current: Setup, classes: CombatClass[], count = 3): Swap[] {
+    const singles = this.upgrades(current, classes, count);
+    if (singles.length >= count) return singles;
+    const most = Math.max(current.dps, ...singles.map((s) => s.setup.dps));
+    const target = Math.max(current.dps * (1 + MIN_GAIN), most + EPS);
+    const found = this.cheapestAbove(target, current.cost, classes);
+    if (!found) return singles;
+    // The item named for the change is the new weapon, or else the dearest new item.
+    const changes = SLOTS
+      .map((slot) => ({ slot, piece: found.equipment[slot] }))
+      .filter((c): c is { slot: Slot, piece: EquipmentPiece } => !!c.piece && c.piece.id !== current.equipment[c.slot]?.id)
+      .map((c) => ({ slot: c.slot, item: itemById.get(c.piece.id)! }))
+      .filter((c) => c.item);
+    if (!changes.length) return singles;
+    const lead = changes.find((c) => c.slot === 'weapon')
+      ?? changes.reduce((a, b) => ((this.costOf(b.item) ?? 0) > (this.costOf(a.item) ?? 0) ? b : a));
+    return [...singles, {
+      slot: lead.slot, item: lead.item, setup: found,
+      gain: found.dps - current.dps, netCost: found.cost - current.cost,
+      changes: changes.map((c) => c.item),
+    }];
+  }
+
+  /** The best setup at the first of a few doubling budgets whose DPS reaches the target, or at any price. */
+  private cheapestAbove(target: number, cost: number, classes: CombatClass[]): Setup | null {
+    let budget = Math.max(cost, 100_000);
+    for (let i = 0; i < SWITCH_STEPS; i++) {
+      budget *= 2;
+      const found = this.optimise(budget, classes);
+      if (found && found.dps >= target) return found;
+    }
+    const best = this.optimise(Infinity, classes);
+    return best && best.dps >= target ? best : null;
   }
 
   /**

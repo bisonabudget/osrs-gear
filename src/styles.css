@@ -940,6 +940,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 .upgrade-icon { display: grid; place-items: center; width: 40px; height: 30px; }
 .upgrade-icon img { max-width: 30px; max-height: 30px; filter: var(--icon-glow); }
 .upgrade-name { font-weight: 500; line-height: 1.2; transition: color 0.15s; }
+.upgrade-more { color: var(--muted); }
 .upgrade-gain { color: var(--accent); font-weight: 700; font-size: 14px; white-space: nowrap; text-align: right; }
 .upgrade-time { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
 .empty { color: var(--muted); font-size: 14px; }
