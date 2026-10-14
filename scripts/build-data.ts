@@ -11,7 +11,7 @@ import { PROTECTIVE_ITEMS } from '../src/protection.ts';
 const ROOT = join(import.meta.dirname, '..');
 const ENGINE = join(ROOT, 'vendor/osrs-dps-calc');
 const OUT = join(ROOT, 'src/data');
-const USER_AGENT = 'osrs-gear (github.com/tristanbowdenfreeman-maker/osrs-gear)';
+const USER_AGENT = 'osrs-gear (github.com/bisonabudget/osrs-gear)';
 
 interface Equipment {
   name: string; id: number; version: string; slot: string; image: string; speed: number; category: string;

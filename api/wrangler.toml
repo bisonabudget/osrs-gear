@@ -10,7 +10,7 @@ workers_dev = true
 
 [vars]
 # The sites allowed to ask, comma-separated.
-ALLOWED_ORIGINS = "https://bisonabudget.com,https://www.bisonabudget.com,https://tristanbowdenfreeman-maker.github.io,http://localhost:5173"
+ALLOWED_ORIGINS = "https://bisonabudget.com,https://www.bisonabudget.com,http://localhost:5173"
 
 # Each visitor (by IP address) gets this many lookups a minute.
 [[ratelimits]]

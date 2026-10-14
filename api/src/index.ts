@@ -11,7 +11,7 @@
 
 const HISCORES = 'https://secure.runescape.com/m=hiscore_oldschool/index_lite.json';
 const PRICES = 'https://prices.runescape.wiki/api/v1/osrs';
-const USER_AGENT = 'osrs-gear (github.com/tristanbowdenfreeman-maker/osrs-gear)';
+const USER_AGENT = 'osrs-gear (github.com/bisonabudget/osrs-gear)';
 // How long a player's levels are kept, and how long "no such player" is.
 const FOUND_SECONDS = 600;
 const MISSING_SECONDS = 60;

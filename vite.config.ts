@@ -8,7 +8,7 @@ import { fightFiles } from './scripts/fight-files';
 
 const path = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
-const USER_AGENT = 'osrs-gear (github.com/tristanbowdenfreeman-maker/osrs-gear)';
+const USER_AGENT = 'osrs-gear (github.com/bisonabudget/osrs-gear)';
 
 // Tells browsers to load scripts only from the site itself, and to reach only the places the site
 // needs, so a script slipped into the page some other way won't run. Added to the built site only,

@@ -403,7 +403,7 @@ export const App = () => {
             Prices are fetched by this site&apos;s server at most once a minute and shared between all visitors, which keeps calls to the Wiki limited so it isn&apos;t overburdened.
           </p>
           <p>
-            <a href="https://github.com/tristanbowdenfreeman-maker/osrs-gear" target="_blank" rel="noreferrer">Source code</a> on GitHub, under the GPL licence.
+            <a href="https://github.com/bisonabudget/osrs-gear" target="_blank" rel="noreferrer">Source code</a> on GitHub, under the GPL licence.
             Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.
           </p>
         </div>

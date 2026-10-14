@@ -11,7 +11,7 @@ import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
 const OUT = join(ROOT, 'public/img');
-const USER_AGENT = 'osrs-gear (github.com/tristanbowdenfreeman-maker/osrs-gear)';
+const USER_AGENT = 'osrs-gear (github.com/bisonabudget/osrs-gear)';
 const COMMIT = readFileSync(join(ROOT, 'vendor/osrs-dps-calc/COMMIT'), 'utf8').trim();
 // Monster pictures are shown at 72px at most.
 const MONSTER_SIZE = 144;

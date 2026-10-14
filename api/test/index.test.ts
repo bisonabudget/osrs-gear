@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { Env, forget, handle, Outside } from '../src/index';
 
-const SITE = 'https://tristanbowdenfreeman-maker.github.io';
+const SITE = 'https://bisonabudget.com';
 const PLAYER = { name: 'Zezima', skills: [{ name: 'Attack', rank: 1, level: 99, xp: 13034431 }] };
 
 // A rate limit that lets through `allowed` lookups, then says no.
