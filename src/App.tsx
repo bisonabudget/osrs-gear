@@ -33,7 +33,8 @@ import { Spinner, Updating } from './ui/Spinner';
 import { picturesOf, preload } from './ui/preload';
 
 // Ko-fi page for the footer's tip link. Left empty, the link stays hidden.
-const DONATE_URL = 'https://ko-fi.com/bisonabudget';
+// Hidden for launch; put back 'https://ko-fi.com/bisonabudget' to show it.
+const DONATE_URL: string = '';
 
 const MAXED: Skills = {
   atk: 99, str: 99, def: 99, ranged: 99, magic: 99, prayer: 99, hp: 99, agility: 99, slayer: 99, mining: 99, herblore: 99,
