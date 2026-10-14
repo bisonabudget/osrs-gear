@@ -28,10 +28,9 @@ const securityPolicy = (api: string): Plugin => ({
         "style-src 'self' 'unsafe-inline'",
         // The build puts the smallest font files inside the stylesheet.
         "font-src 'self' data:",
-        // Wiki icons the site hasn't saved still load from the Wiki.
-        "img-src 'self' data: https://oldschool.runescape.wiki",
-        // Prices come from the Worker, or the Wiki if the Worker doesn't answer.
-        `connect-src 'self' ${api} https://prices.runescape.wiki`,
+        // Pictures and prices only come from the site and its Worker, never straight from the Wiki.
+        "img-src 'self' data:",
+        `connect-src 'self' ${api}`,
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'none'",

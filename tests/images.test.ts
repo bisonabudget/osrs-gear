@@ -1,11 +1,12 @@
 // Every picture the site shows is kept in public/img. After a data rebuild, run
 // scripts/fetch-images.ts to copy any new ones.
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import items from '../src/data/items.json';
 import monsters from '../src/data/monsters.json';
-import { backupOf, itemImage, monsterImage, wikiImage } from '../src/catalog';
+import wikiIcons from '../src/data/wiki-images.json';
+import { itemImage, monsterImage, wikiImage } from '../src/catalog';
 
 const IMG = join(import.meta.dirname, '../public/img');
 
@@ -17,10 +18,21 @@ test('every item and monster picture is on the site', () => {
   expect(missing).toEqual([]);
 });
 
-test('a picture the site keeps can fall back to the Wiki copy', () => {
-  expect(backupOf(itemImage('Abyssal whip.png'))).toBe('https://oldschool.runescape.wiki/images/Abyssal_whip.png');
-  expect(backupOf(monsterImage('Vorkath.png'))).toBe('https://oldschool.runescape.wiki/images/Vorkath.png');
-  expect(backupOf(wikiImage('Overload (+)(4)'))).toBe('https://oldschool.runescape.wiki/images/Overload_(%2B)(4).png');
-  // Icons the site doesn't keep already load from the Wiki, so have nothing to fall back to.
-  expect(backupOf(wikiImage('Not a real icon'))).toBeNull();
+test('every icon the site shows is on the site, so none load from the Wiki', () => {
+  // The icons named in the code, plus each saved icon's file.
+  const src = join(import.meta.dirname, '../src');
+  const code = readdirSync(src, { recursive: true, encoding: 'utf8' })
+    .filter((f) => /\.tsx?$/.test(f))
+    .map((f) => readFileSync(join(src, f), 'utf8'))
+    .join('\n');
+  const named = [...code.matchAll(/wikiImage\('([^']+)'\)|icon: '([^']+)'/g)].map((m) => m[1] ?? m[2]);
+  const missing = [...new Set([...named, ...wikiIcons])]
+    .filter((name) => !existsSync(join(IMG, '..', decodeURIComponent(wikiImage(name)))));
+  expect(missing).toEqual([]);
+});
+
+test('pictures load only from the site', () => {
+  for (const src of [itemImage('Abyssal whip.png'), monsterImage('Vorkath.png'), wikiImage('Overload (+)(4)'), wikiImage('Not a real icon')]) {
+    expect(src).toMatch(/^img\//);
+  }
 });
