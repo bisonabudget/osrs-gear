@@ -396,6 +396,10 @@ export const App = () => {
             DPS from the <a href="https://tools.runescape.wiki/osrs-dps/" target="_blank" rel="noreferrer">OSRS Wiki DPS calculator</a>.
             Prices from the <a href="https://prices.runescape.wiki/" target="_blank" rel="noreferrer">OSRS Wiki real-time prices</a>, as Grand Exchange instant-buy prices.
           </p>
+          <p>
+            <strong>Wiki use.</strong> The calculator runs in your browser, and the item data and pictures are kept on this site, so searching doesn&apos;t call the Wiki.
+            Prices are fetched by this site&apos;s server at most once a minute and shared between all visitors, which keeps calls to the Wiki limited so it isn&apos;t overburdened.
+          </p>
           <p>Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.</p>
         </div>
         {DONATE_URL && (
