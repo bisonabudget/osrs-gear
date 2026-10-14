@@ -401,7 +401,10 @@ export const App = () => {
             <strong>Wiki use.</strong> The calculator runs in your browser, and the item data and pictures are kept on this site, so searching doesn&apos;t call the Wiki.
             Prices are fetched by this site&apos;s server at most once a minute and shared between all visitors, which keeps calls to the Wiki limited so it isn&apos;t overburdened.
           </p>
-          <p>Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.</p>
+          <p>
+            <a href="https://github.com/tristanbowdenfreeman-maker/osrs-gear" target="_blank" rel="noreferrer">Source code</a> on GitHub, under the GPL licence.
+            Not affiliated with Jagex. Old School RuneScape is a trademark of Jagex Ltd.
+          </p>
         </div>
         {DONATE_URL && (
           <div className="donate">
