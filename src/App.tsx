@@ -8,6 +8,7 @@ import { protectionFor } from './protection';
 import { inToa, PATH_LEVEL_MAX, pathOf, RAID_LEVEL_MAX, raidHp } from './toa';
 import { inCox } from './cox';
 import { NO_DRAINS } from './drains';
+import { PRICES_DOWN } from './prices';
 import type { Drains } from './drains';
 import { wildernessOf } from './wilderness';
 import { useStored } from './storage';
@@ -360,7 +361,7 @@ export const App = () => {
         <section className="col col-results" aria-live="polite">
           {error && (
             <div className="problem">
-              <p>Something went wrong working this out: {error}</p>
+              <p>{error === PRICES_DOWN ? error : `Something went wrong working this out: ${error}`}</p>
               <button type="button" className="retry" onClick={() => { setError(null); setTries((t) => t + 1); }}>Try again</button>
             </div>
           )}
