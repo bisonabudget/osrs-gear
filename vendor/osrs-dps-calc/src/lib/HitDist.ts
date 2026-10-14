@@ -111,6 +111,9 @@ export class WeightedHit {
   }
 }
 
+// osrs-gear patch: flattenSingles' lookup from hash to position, -1 where unused, kept between calls.
+let flattenSlots = new Int32Array(256).fill(-1);
+
 export class HitDistribution {
   readonly hits: WeightedHit[];
 
@@ -118,11 +121,16 @@ export class HitDistribution {
     this.hits = hits;
   }
 
+  // osrs-gear patch: set by flatten() on what it returns, which has nothing left to merge.
+  private flat = false;
+
   public addHit(w: WeightedHit): void {
+    this.flat = false;
     this.hits.push(w);
   }
 
   public addHits(w: WeightedHit[]): void {
+    this.flat = false;
     this.hits.push(...w);
   }
 
@@ -147,6 +155,20 @@ export class HitDistribution {
     return this.wideTransform(t, opts).flatten();
   }
 
+  /**
+   * osrs-gear patch: the same as transform() with a transformer that turns each hitsplat into exactly
+   * one hitsplat at probability 1, without building a distribution for every hitsplat.
+   */
+  public transformEach(t: (hitsplat: Hitsplat) => Hitsplat, opts: TransformOpts = DEFAULT_TRANSFORM_OPTS): HitDistribution {
+    if (this.hits.some((h) => h.hitsplats.length === 0)) {
+      return this.transform((h) => new HitDistribution([new WeightedHit(1.0, [t(h)])]), opts);
+    }
+    return new HitDistribution(this.hits.map((h) => new WeightedHit(
+      h.probability,
+      h.hitsplats.map((s) => (!s.accurate && !opts.transformInaccurate ? s : t(s))),
+    ))).flatten();
+  }
+
   public scaleProbability(factor: number): HitDistribution {
     return new HitDistribution(this.hits
       .map((h) => h.scale(factor)));
@@ -164,25 +186,59 @@ export class HitDistribution {
    * Merges the probabilities of hits with identical damage values
    */
   public flatten(): HitDistribution {
-    // osrs-gear patch: when every hit is one hitsplat of whole damage, its hash is a plain number
-    // (damage * 2, plus 1 if accurate), which is far quicker than a bigint and merges the same
-    // hits in the same order.
-    if (this.hits.every((h) => h.hitsplats.length === 1 && Number.isInteger(h.hitsplats[0].damage))) {
-      const single = new Map<number, [number, Hitsplat[]]>();
-      for (const hit of this.hits) {
-        const splat = hit.hitsplats[0];
-        const hash = splat.damage * 2 + (splat.accurate ? 1 : 0);
-        const prev = single.get(hash);
-        if (prev === undefined) single.set(hash, [hit.probability, hit.hitsplats]);
-        else prev[0] += hit.probability;
-      }
-      const d = new HitDistribution([]);
-      for (const [prob, hitsplats] of single.values()) {
-        if (prob > 0) d.addHit(new WeightedHit(prob, hitsplats));
-      }
-      return d;
-    }
+    // osrs-gear patch: a flattened distribution has no equal hits left, so it flattens to itself.
+    if (this.flat) return this;
+    const d = this.flattenSingles() ?? this.flattenAny();
+    d.flat = true;
+    return d;
+  }
 
+  /**
+   * osrs-gear patch: when every hit is one hitsplat of whole, non-negative damage, its hash is a small
+   * number (damage * 2, plus 1 if accurate) that can index an array, which is far quicker than a
+   * bigint in a map and merges the same hits in the same order.
+   */
+  private flattenSingles(): HitDistribution | undefined {
+    const { hits } = this;
+    let top = 0;
+    for (let i = 0; i < hits.length; i++) {
+      const splats = hits[i].hitsplats;
+      if (splats.length !== 1) return undefined;
+      const { damage } = splats[0];
+      if (!Number.isInteger(damage) || damage < 0) return undefined;
+      if (damage > top) top = damage;
+    }
+    if (top > 4096) return undefined;
+    if (flattenSlots.length < top * 2 + 2) flattenSlots = new Int32Array(top * 2 + 2).fill(-1);
+    const slot = flattenSlots;
+    const probs: number[] = [];
+    const lists: Hitsplat[][] = [];
+    for (let i = 0; i < hits.length; i++) {
+      const hit = hits[i];
+      const splat = hit.hitsplats[0];
+      const hash = splat.damage * 2 + (splat.accurate ? 1 : 0);
+      const at = slot[hash];
+      if (at === -1) {
+        slot[hash] = probs.length;
+        probs.push(hit.probability);
+        lists.push(hit.hitsplats);
+      } else {
+        probs[at] += hit.probability;
+      }
+    }
+    // Clears the slots used, so the array is all -1 again for the next call.
+    for (let i = 0; i < lists.length; i++) {
+      const splat = lists[i][0];
+      slot[splat.damage * 2 + (splat.accurate ? 1 : 0)] = -1;
+    }
+    const d = new HitDistribution([]);
+    for (let i = 0; i < probs.length; i++) {
+      if (probs[i] > 0) d.hits.push(new WeightedHit(probs[i], lists[i]));
+    }
+    return d;
+  }
+
+  private flattenAny(): HitDistribution {
     const acc = new Map<bigint, number>();
     const hitLists = new Map<bigint, Hitsplat[]>();
     for (const hit of this.hits) {
@@ -340,6 +396,10 @@ export class AttackDistribution {
 
   public transform(t: HitTransformer, opts: TransformOpts = DEFAULT_TRANSFORM_OPTS): AttackDistribution {
     return this.map((d) => d.transform(t, opts));
+  }
+
+  public transformEach(t: (hitsplat: Hitsplat) => Hitsplat, opts: TransformOpts = DEFAULT_TRANSFORM_OPTS): AttackDistribution {
+    return this.map((d) => d.transformEach(t, opts));
   }
 
   public flatten(): AttackDistribution {

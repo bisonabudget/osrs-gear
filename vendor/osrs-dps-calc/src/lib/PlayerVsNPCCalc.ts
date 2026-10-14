@@ -1393,7 +1393,12 @@ export default class PlayerVsNPCCalc extends BaseCalc {
       }
     }
 
-    const npcDist = attackerDist.transform(this.applyNpcTransforms(styleType));
+    // osrs-gear patch: most monsters have no damage effects, and passing every hit through an empty
+    // transformer only merges equal hits, which flatten() does far quicker with the same result.
+    const npcTransformer = this.applyNpcTransforms(styleType);
+    const npcDist = npcTransformer === PlayerVsNPCCalc.NO_NPC_TRANSFORMS
+      ? attackerDist.flatten()
+      : attackerDist.transform(npcTransformer);
 
     if (process.env.NEXT_PUBLIC_HIT_DIST_SANITY_CHECK) {
       npcDist.dists.forEach((hitDist, ix) => {
@@ -1827,16 +1832,17 @@ export default class PlayerVsNPCCalc extends BaseCalc {
       && this.player.equipment.ammo?.name.includes('Seeking')
       && ammoApplicability(this.player.equipment.weapon?.id, this.player.equipment.ammo?.id) === AmmoApplicability.INCLUDED
     ) {
-      dist = dist.transform(
-        (h) => HitDistribution.single(1.0, [new Hitsplat(Math.max(h.damage, 3), h.accurate)]),
+      dist = dist.transformEach(
+        (h) => new Hitsplat(Math.max(h.damage, 3), h.accurate),
         { transformInaccurate: false },
       );
     }
 
     // raise accurate 0s to 1
+    // osrs-gear patch: transformEach gives the same result as transform here, much quicker.
     if (accurateZeroApplicable) {
-      dist = dist.transform(
-        (h) => HitDistribution.single(1.0, [new Hitsplat(Math.max(h.damage, 1))]),
+      dist = dist.transformEach(
+        (h) => new Hitsplat(Math.max(h.damage, 1)),
         { transformInaccurate: false },
       );
     }
@@ -1917,6 +1923,8 @@ export default class PlayerVsNPCCalc extends BaseCalc {
 
     return dist;
   }
+
+  private static readonly NO_NPC_TRANSFORMS: HitTransformer = (hitsplat) => HitDistribution.single(1.0, [hitsplat]);
 
   private npcTransformCache: { [k in Exclude<CombatStyleType, null>]?: HitTransformer } = {};
 
@@ -2030,6 +2038,11 @@ export default class PlayerVsNPCCalc extends BaseCalc {
     const flatArmour = this.monster.defensive.flat_armour;
     if (flatArmour && styleType !== 'magic') {
       relevantEffects.push([flatAddTransformer(-flatArmour), { transformInaccurate: false }]);
+    }
+
+    if (relevantEffects.length === 0) {
+      this.npcTransformCache[styleType!] = PlayerVsNPCCalc.NO_NPC_TRANSFORMS;
+      return PlayerVsNPCCalc.NO_NPC_TRANSFORMS;
     }
 
     const transformer: HitTransformer = (hitsplat) => {
