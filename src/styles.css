@@ -222,6 +222,7 @@ p { margin: 0; }
   min-width: 0;
   padding: 16px;
   border: 1px solid var(--line);
+  border-top: 2px solid var(--accent);
   border-radius: var(--radius);
   background: var(--card);
 }
