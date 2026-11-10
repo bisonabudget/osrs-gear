@@ -403,20 +403,26 @@ const DEFAULT_VERSIONS = ['', 'Standard', 'Normal', 'Regular', 'Post-quest'];
 
 // Monsters that can't be fought to the death: hunter creatures and implings are caught, scenery
 // and the forms below can't be damaged, the Sire's tentacles are only stunned, and a monster with
-// 1 hitpoint dies to any hit, so gear makes no difference.
+// 1 hitpoint dies to any hit, so gear makes no difference. The Nightmare's totems are kept: they
+// are charged by damage, so the best Setup is the one that charges them fastest.
 const monsterCategories = await pageCategories([...new Set(monsters.map((m) => m.name))]);
 const CANT_DAMAGE = /\b(?:invincible|whirlpool|shadow clone)\b/i;
-// Charged or held back during a fight, never killed.
-const NOT_KILLED = new Set(['Tentacle (Abyssal Sire)', 'Totem (The Nightmare)', "Totem (Phosani's Nightmare)"]);
+// Held back during a fight, never killed.
+const NOT_KILLED = new Set(['Tentacle (Abyssal Sire)']);
+// A totem that is already charged can't be attacked.
+const CHARGED_TOTEM = /^Totem \(.*, charged\)\.png$/;
 let notKillable = 0;
 const killable = (m: Monster) => {
   const categories = monsterCategories.get(m.name) ?? [];
-  return m.skills.hp > 1 && !/ impling$/i.test(m.name) && !NOT_KILLED.has(m.name) && !CANT_DAMAGE.test(m.version)
+  return m.skills.hp > 1 && !/ impling$/i.test(m.name) && !NOT_KILLED.has(m.name) && !CANT_DAMAGE.test(m.version) && !CHARGED_TOTEM.test(m.image)
     && !categories.some((c) => c === 'Hunter creatures' || c === 'Scenery');
 };
 
 const byMonsterName = new Map<string, Monster[]>();
 for (const m of monsters) {
+  // Both Nightmares' totems have one id and no version, so the fight they are in tells them apart.
+  const totemOf = /^Totem \((.+)\)$/.exec(m.name)?.[1];
+  if (totemOf && !m.version) m.version = totemOf;
   if (!(m.skills?.hp > 0) || isQuestCopy(m)) continue;
   if (!killable(m)) {
     notKillable += 1;

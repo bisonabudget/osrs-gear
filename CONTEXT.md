@@ -57,7 +57,7 @@ Two Setups side by side against one Monster: one the player kept and the one on 
 ### Monsters
 
 **Monster**:
-Anything a player can attack and kill, picked by name. Hunter creatures, implings, scenery, things that can't be damaged and anything with 1 hitpoint are left out.
+Anything a player can attack and kill, picked by name. Hunter creatures, implings, scenery, things that can't be damaged and anything with 1 hitpoint are left out. The Nightmare's totems count, as they are charged by damage: their hitpoints are the damage it takes to charge one.
 _Avoid_: NPC, mob, enemy
 
 **Version**:

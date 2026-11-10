@@ -1,67 +1,53 @@
 :root {
-  --bg: #dde4e9;
-  --card: #f4f7f9;
-  --head: #cfd9e0;
-  --soft: #e7edf1;
-  --ink: #16222b;
-  --muted: #51626e;
-  --line: #a9b8c3;
-  --accent: #0b7a6b;
-  --link: #0b7a6b;
-  --tile: #c3d0d9;
-  --good: #1f7a3d;
-  --bad: #b3322a;
+  /* Light theme: the Wiki's parchment. */
+  --bg: #d8ccb4;
+  --card: #ece4d1;
+  --head: #d0bd97;
+  --soft: #e2d8c1;
+  --ink: #2a2117;
+  --muted: #5c4d39;
+  --line: #b3a181;
+  --accent: #8a3a00;
+  --link: #6b4a00;
+  --mark: #8a3a00;
+  --tile: #c4b596;
+  --good: #1f6b35;
+  --bad: #a32a22;
   --radius: 3px;
 
-  /* The game's interface. */
+  /* The game's interface, the same in both themes. */
   --stone: #3e3529;
   --stone-dark: #2e271e;
   --stone-edge: #1f1a14;
   --stone-tab: #6b2a1c;
+  --stone-tab-edge: #9b3d25;
   --osrs-orange: #ff981f;
   --osrs-text: #e9dcbc;
+  --osrs-dim: var(--osrs-dim);
   --osrs-yellow: #ffff00;
   --coin-bg: #1c1915;
   --coin-edge: transparent;
 
-  --display: 'Roboto Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --display: 'Alegreya', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
   --body: 'Roboto Condensed', 'Arial Narrow', system-ui, sans-serif;
 
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #1d2831;
-    --card: #263540;
-    --head: #32454f;
-    --soft: #2a3a45;
-    --ink: #e8eef2;
-    --muted: #93a6b3;
-    --line: #425664;
-    --accent: #4fd1b5;
-    --link: #4fd1b5;
-    --tile: #56707f;
-    --good: #6fd08a;
-    --bad: #f0766b;
-    --coin-bg: #000000;
-    --coin-edge: rgb(255 255 255 / 12%);
-    color-scheme: dark;
-  }
-}
-
+/* index.html sets data-theme before the page is drawn, from the saved choice or the device's. */
 :root[data-theme="dark"] {
-  --bg: #1d2831;
-  --card: #263540;
-  --head: #32454f;
-  --soft: #2a3a45;
-  --ink: #e8eef2;
-  --muted: #93a6b3;
-  --line: #425664;
-  --accent: #4fd1b5;
-  --link: #4fd1b5;
-  --tile: #56707f;
-  --good: #6fd08a;
+  --bg: #191510;
+  --card: #241e17;
+  --head: #32291f;
+  --soft: #2b241b;
+  --ink: #ece3cf;
+  --muted: #a89a80;
+  --line: #4a3e30;
+  --accent: #ff981f;
+  --link: #dcb466;
+  --mark: #ffd84a;
+  --tile: #55483a;
+  --good: #7fd08a;
   --bad: #f0766b;
   --coin-bg: #000000;
   --coin-edge: rgb(255 255 255 / 12%);
@@ -86,11 +72,11 @@ body {
 img { display: block; }
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
-a { color: var(--link); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--link); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+a:hover { text-decoration-color: currentColor; }
 p { margin: 0; }
 
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .label {
   margin: 0 0 8px;
@@ -110,20 +96,20 @@ p { margin: 0; }
   gap: 24px;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 8px 32px;
+  padding: 14px 32px 10px;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
+  line-height: 1;
   color: var(--ink);
   text-decoration: none;
   font-family: var(--display);
 }
-.brand:hover { text-decoration: none; color: var(--accent); }
 
 .brand img { width: 28px; height: auto; }
 
@@ -146,7 +132,7 @@ p { margin: 0; }
 }
 
 .rsn-field:hover { border-color: var(--muted); }
-.rsn-field:focus-within { border-color: var(--accent); }
+.rsn-field:focus-within { border-color: var(--ink); }
 .rsn-field.invalid { border-color: var(--bad); }
 .rsn-field img { width: 18px; height: 18px; object-fit: contain; flex: none; }
 
@@ -190,7 +176,7 @@ p { margin: 0; }
   font-weight: 700;
   white-space: nowrap;
 }
-.rsn-load:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.rsn-load:hover:not(:disabled) { border-color: var(--ink); }
 
 .rsn-load:disabled { opacity: 0.45; cursor: default; }
 
@@ -211,18 +197,19 @@ p { margin: 0; }
 .layout {
   display: grid;
   grid-template-columns: 340px minmax(360px, 410px) minmax(0, 1fr);
-  gap: 16px;
+  gap: 32px;
   align-items: start;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 8px 32px 40px;
+  padding: 16px 32px 48px;
+  border-top: 1px solid var(--line);
 }
 
-.col {
-  min-width: 0;
-  padding: 16px;
+/* The monster and the gear sit straight on the page. Only the answer gets a panel. */
+.col { min-width: 0; }
+.col-results {
+  padding: 20px;
   border: 1px solid var(--line);
-  border-top: 2px solid var(--accent);
   border-radius: var(--radius);
   background: var(--card);
 }
@@ -278,7 +265,7 @@ p { margin: 0; }
 }
 
 .search-field:hover { border-color: var(--muted); }
-.search-field:focus-within { border-color: var(--accent); }
+.search-field:focus-within { border-color: var(--ink); }
 
 .search-icon {
   width: 20px;
@@ -317,7 +304,7 @@ p { margin: 0; }
 }
 
 .dice svg { width: 24px; height: 24px; fill: currentColor; }
-.dice:hover { background: var(--head); color: var(--accent); }
+.dice:hover { background: var(--head); }
 
 .search-results {
   position: absolute;
@@ -378,14 +365,14 @@ p { margin: 0; }
 .monster-name {
   margin: 0 0 4px;
   font-weight: 700;
-  font-size: 30px;
-  line-height: 1.05;
-  color: var(--accent);
+  font-size: 34px;
+  line-height: 1;
+  color: var(--ink);
   overflow-wrap: anywhere;
   font-family: var(--display);
 }
 
-.monster-name.long { font-size: 24px; }
+.monster-name.long { font-size: 26px; }
 .monster-level { color: var(--muted); font-size: 15px; }
 
 .facts { margin: 0; border-top: 1px solid var(--line); }
@@ -467,7 +454,7 @@ p { margin: 0; }
 
 .stat-group img { height: 20px; width: auto; max-width: 28px; object-fit: contain;  }
 .stat-value { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
-.stat-group li.easy .stat-value { color: var(--accent); }
+.stat-group li.easy .stat-value { color: var(--mark); }
 
 .stat-group li.hit::after {
   content: '';
@@ -476,11 +463,11 @@ p { margin: 0; }
   right: 22%;
   bottom: 0;
   height: 2px;
-  background: var(--accent);
+  background: var(--mark);
 }
 
 .stat-group li.weakness:not(:has(img)) .stat-value { padding-top: 23px; font-weight: 400; color: var(--muted); }
-.stat-group li.weakness.used .stat-value { color: var(--accent); }
+.stat-group li.weakness.used .stat-value { color: var(--mark); }
 .statbox .note { margin: 8px 10px 10px; }
 
 .task { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 16px 0 12px; }
@@ -545,7 +532,7 @@ p { margin: 0; }
   transition: background 0.15s, border-color 0.15s;
 }
 
-.switch:hover .switch-track { border-color: var(--accent); }
+.switch:hover .switch-track { border-color: var(--ink); }
 
 .switch-track::after {
   content: '';
@@ -554,15 +541,15 @@ p { margin: 0; }
   left: 4px;
   width: 4px;
   height: 8px;
-  border: solid var(--card);
+  border: solid var(--osrs-text);
   border-width: 0 2px 2px 0;
   opacity: 0;
   transform: rotate(40deg);
 }
 
-.switch input:checked + .switch-track { background: var(--accent); border-color: var(--accent); }
+.switch input:checked + .switch-track { background: var(--stone-tab); border-color: var(--stone-tab-edge); }
 .switch input:checked + .switch-track::after { opacity: 1; }
-.switch input:focus-visible + .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--ink); outline-offset: 2px; }
 .switch img { width: 18px; height: 18px; object-fit: contain; }
 
 .controls {
@@ -595,7 +582,8 @@ p { margin: 0; }
 
 .chip img { width: 18px; height: 18px; object-fit: contain; }
 .chip:hover { border-color: var(--muted); }
-.chip.on { background: var(--bg); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+/* On, like the open tab of the game's side panel. */
+.chip.on { background: var(--stone-tab); border-color: var(--stone-tab-edge); color: var(--osrs-text); font-weight: 700; }
 
 /* Budget */
 
@@ -608,7 +596,7 @@ p { margin: 0; }
   transition: border-color 0.15s;
 }
 
-.budget-row:focus-within { border-color: var(--accent); }
+.budget-row:focus-within { border-color: var(--ink); }
 .budget-row.invalid { border-color: var(--bad); }
 
 .budget-coins {
@@ -639,10 +627,10 @@ p { margin: 0; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px 10px 14px;
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  background: var(--head);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
   font-size: 14px;
 }
 
@@ -656,7 +644,7 @@ p { margin: 0; }
   font-size: 13px;
   font-weight: 700;
 }
-.edited button:hover { border-color: var(--accent); color: var(--accent); }
+.edited button:hover { border-color: var(--ink); }
 
 /* Coins */
 
@@ -687,7 +675,7 @@ p { margin: 0; }
   text-shadow: none;
 }
 
-a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
+a.coins-untradeable:hover { border-color: var(--ink); color: var(--ink); }
 
 /* The game's side panel */
 
@@ -720,7 +708,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 }
 
 .osrs-tabs button:hover { background: #3a3125; }
-.osrs-tabs button.on { background: var(--stone-tab); box-shadow: inset 0 0 0 1px #9b3d25; }
+.osrs-tabs button.on { background: var(--stone-tab); box-shadow: inset 0 0 0 1px var(--stone-tab-edge); }
 .osrs-tabs img { max-width: 24px; max-height: 24px; image-rendering: pixelated; }
 
 .osrs-body {
@@ -733,7 +721,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 }
 
 .osrs-title { margin-bottom: 10px; color: var(--osrs-orange); font-weight: 700; font-size: 16px; }
-.osrs-small { margin-top: 12px; font-size: 13px; color: #b9ab8b; }
+.osrs-small { margin-top: 12px; font-size: 13px; color: var(--osrs-dim); }
 .osrs-note { display: grid; gap: 8px; }
 
 .osrs-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
@@ -750,7 +738,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 }
 
 .osrs-buttons button:hover { background: #3a3125; }
-.osrs-buttons button.on { background: var(--stone-tab); color: var(--osrs-orange); box-shadow: inset 0 0 0 1px #9b3d25; }
+.osrs-buttons button.on { background: var(--stone-tab); color: var(--osrs-orange); box-shadow: inset 0 0 0 1px var(--stone-tab-edge); }
 
 /* Equipment stats, shown in the panel in place of the worn equipment. */
 
@@ -765,12 +753,12 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 
 .stats .label { color: var(--osrs-orange); font-size: 13px; letter-spacing: 0.04em; text-transform: none; }
 .stats th, .stats td { padding: 4px; text-align: right; border-bottom: 1px solid rgb(255 255 255 / 10%); }
-.stats thead th { font-size: 12px; font-weight: 500; color: #b9ab8b; }
+.stats thead th { font-size: 12px; font-weight: 500; color: var(--osrs-dim); }
 .stats tbody th { text-align: left; font-weight: 500; }
 
 .other { margin: 8px 0 0; font-size: 13.5px; }
 .other div { display: flex; justify-content: space-between; padding: 4px; border-bottom: 1px solid rgb(255 255 255 / 10%); }
-.other dt { color: #b9ab8b; }
+.other dt { color: var(--osrs-dim); }
 .other dd { margin: 0; font-variant-numeric: tabular-nums; }
 
 .worn {
@@ -838,7 +826,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #b9ab8b;
+  color: var(--osrs-dim);
 }
 
 .slot-list-cols span:first-child { grid-column: 1 / 3; }
@@ -867,7 +855,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 .slot-list li button.current { background: rgb(255 152 31 / 16%); }
 .slot-list li img { max-width: 32px; max-height: 32px; margin: auto; }
 .slot-item-name { font-size: 14px; line-height: 1.2; }
-.slot-item-name small { display: block; margin-top: 1px; font-size: 12px; color: #b9ab8b; }
+.slot-item-name small { display: block; margin-top: 1px; font-size: 12px; color: var(--osrs-dim); }
 .slot-item-dps { text-align: right; color: var(--osrs-yellow); font-variant-numeric: tabular-nums; font-size: 14px; }
 .slot-list .coins { justify-self: end; }
 
@@ -884,7 +872,7 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
   font-size: 15px;
 }
 
-.osrs-facts dt { color: #b9ab8b; }
+.osrs-facts dt { color: var(--osrs-dim); }
 .osrs-facts dd { margin: 0; }
 .cap { text-transform: capitalize; }
 
@@ -940,13 +928,13 @@ a.coins-untradeable:hover { border-color: var(--accent); color: var(--accent); }
 }
 
 .upgrades button:hover { background: var(--head); }
-.upgrades button:hover .upgrade-name { color: var(--accent); }
+.upgrades button:hover .upgrade-name { text-decoration: underline; text-underline-offset: 3px; }
 
 .upgrade-icon { display: grid; place-items: center; width: 40px; height: 30px; }
 .upgrade-icon img { max-width: 30px; max-height: 30px;  }
 .upgrade-name { font-weight: 500; line-height: 1.2; transition: color 0.15s; }
 .upgrade-more { color: var(--muted); }
-.upgrade-gain { color: var(--accent); font-weight: 700; font-size: 14px; white-space: nowrap; text-align: right; }
+.upgrade-gain { color: var(--good); font-weight: 700; font-size: 14px; white-space: nowrap; text-align: right; }
 .upgrade-time { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
 .empty { color: var(--muted); font-size: 14px; }
 
@@ -1061,22 +1049,31 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
 @keyframes pic-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { img.pic-loaded { animation: none; } }
 
-.dps {
-  font-size: clamp(56px, 5.4vw, 76px);
-  font-weight: 700;
-  line-height: 0.95;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-  font-family: var(--display);
-}
-
+/* The answer, as a readout on the game's stone: DPS in the yellow of a stack of coins. */
 .hero {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  align-items: end;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--line);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 2px solid var(--stone-edge);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(rgb(0 0 0 / 6%) 1px, transparent 1px) 0 0 / 100% 4px,
+    var(--stone);
+  color: var(--osrs-text);
+  text-shadow: 1px 1px 0 #000;
+}
+
+.hero .label { color: var(--osrs-orange); }
+
+.dps {
+  font-size: clamp(52px, 5vw, 72px);
+  font-weight: 700;
+  line-height: 0.95;
+  color: var(--osrs-yellow);
+  font-variant-numeric: tabular-nums;
+  text-shadow: 2px 2px 0 #000;
 }
 
 .figure {
@@ -1085,7 +1082,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   justify-content: space-between;
   gap: 8px;
   padding: 5px 0;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgb(255 255 255 / 10%);
 }
 
 .figure:first-child { border-top: 0; }
@@ -1100,21 +1097,21 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 14px;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--accent);
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--osrs-dim);
 }
 
 .edge img { width: 22px; height: 22px; object-fit: contain; }
 
 /* Shrinks only when the results column is too narrow for a kill time like "12m 34s". */
 .figure-value {
-  font-size: clamp(18px, 5.2cqi, 24px);
+  font-size: clamp(18px, 5.2cqi, 22px);
   font-weight: 700;
   line-height: 1.05;
   white-space: nowrap;
-  font-family: var(--display);
+  font-variant-numeric: tabular-nums;
 }
 
 .hitsplat { position: relative; width: 40px; height: 40px; }
@@ -1149,6 +1146,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
 
 .bill li {
   display: grid;
+  font-variant-numeric: tabular-nums;
   grid-template-columns: 32px 1fr auto;
   align-items: center;
   gap: 10px;
@@ -1179,7 +1177,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
 .maths summary::after { content: '+'; font-size: 16px; line-height: 1; }
 .maths[open] summary::after { content: '\2212'; }
 .maths summary::-webkit-details-marker { display: none; }
-.maths summary:hover { text-decoration-color: var(--accent); }
+.maths summary:hover { text-decoration-color: currentColor; }
 .maths[open] summary { margin-bottom: 12px; }
 
 .supplies { margin-top: 8px; }
@@ -1206,7 +1204,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   font-weight: 700;
   cursor: pointer;
 }
-.retry:hover { border-color: var(--accent); color: var(--accent); }
+.retry:hover { border-color: var(--ink); }
 .working { animation: pulse 1.2s ease-in-out infinite; }
 
 @keyframes pulse {
@@ -1230,7 +1228,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   transition: border-color 0.15s, color 0.15s;
 }
 
-.theme-button:hover { border-color: var(--accent); color: var(--accent); }
+.theme-button:hover { border-color: var(--ink); }
 
 .theme-button svg {
   width: 20px;
@@ -1242,7 +1240,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
 }
 
 @media (max-width: 1240px) {
-  .layout { grid-template-columns: minmax(340px, 410px) minmax(0, 1fr); gap: 16px; }
+  .layout { grid-template-columns: minmax(340px, 410px) minmax(0, 1fr); gap: 28px 32px; }
   .col-monster {
     grid-column: 1 / -1;
     display: grid;
@@ -1265,12 +1263,13 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   .rsn { width: 100%; }
   .rsn-field { height: 40px; padding-right: 4px; }
   .rsn-load { height: 32px; }
-  .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 8px 12px 40px; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 12px 16px 40px; }
+  .col-results { padding: 16px; }
   .small-print { padding: 16px 16px 80px; flex-direction: column; }
   .donate { flex-wrap: wrap; }
   .col-monster { display: block; }
-  .monster-name { font-size: 28px; }
-  .monster-name.long { font-size: 22px; }
+  .monster-name { font-size: 30px; }
+  .monster-name.long { font-size: 24px; }
   .upgrades button { grid-template-columns: 40px 1fr auto; }
   .upgrades .coins { grid-column: 3; }
   .upgrade-gain { grid-column: 2; grid-row: 2; margin-top: -6px; text-align: left; }
@@ -1294,7 +1293,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   cursor: pointer;
 }
 
-.text-button:hover { color: var(--accent); text-decoration-color: var(--accent); }
+.text-button:hover { color: var(--ink); text-decoration-color: currentColor; }
 .cost-total { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
 .compare { display: grid; gap: 18px; transition: opacity 0.2s; }
@@ -1345,19 +1344,18 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   font-weight: 700;
   line-height: 0.95;
   font-variant-numeric: tabular-nums;
-  font-family: var(--display);
 }
 
-.compare-grid small { font-family: var(--body); font-size: 13px; font-weight: 700; }
+.compare-grid small { font-size: 13px; font-weight: 700; }
 .compare-grid small.better { color: var(--good); }
 .compare-grid small.worse { color: var(--bad); }
 
 .compare-summary {
   margin: 0;
-  padding: 10px 12px 10px 14px;
-  border-left: 3px solid var(--accent);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  background: var(--head);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--soft);
   font-size: 14px;
 }
 
@@ -1403,7 +1401,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
   cursor: pointer;
 }
 
-.compare-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.compare-actions button:hover { border-color: var(--ink); }
 
 /* Custom monster */
 .stat-input {
@@ -1425,7 +1423,7 @@ img.pic-loaded { animation: pic-in 0.15s ease-out; }
 .stat-input::-webkit-inner-spin-button,
 .stat-input::-webkit-outer-spin-button { margin: 0; -webkit-appearance: none; }
 select.stat-input { max-width: 76px; font-weight: 500; text-align-last: center; }
-.stat-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.stat-input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 
 .stat-word {
   height: 20px;
@@ -1451,7 +1449,7 @@ select.stat-input { max-width: 76px; font-weight: 500; text-align-last: center; 
   cursor: pointer;
 }
 
-.tags.toggles button[aria-pressed="true"] { border-color: var(--accent); background: var(--head); color: var(--accent); font-weight: 500; }
+.tags.toggles button[aria-pressed="true"] { border-color: var(--stone-tab-edge); background: var(--stone-tab); color: var(--osrs-text); font-weight: 500; }
 .custom-from { display: block; }
 .custom-from .note { margin: 0 0 6px; }
 .custom-actions { margin-bottom: 8px; }

@@ -5,6 +5,8 @@ import { App } from './App';
 import '@fontsource/roboto-condensed/400.css';
 import '@fontsource/roboto-condensed/500.css';
 import '@fontsource/roboto-condensed/700.css';
+// The brand and the monster's name only.
+import '@fontsource/alegreya/latin-700.css';
 import './styles.css';
 
 // The built site keeps itself on the visitor's device for their next visit (see src/sw.js).

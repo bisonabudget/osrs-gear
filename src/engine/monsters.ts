@@ -21,6 +21,12 @@ export interface MonsterEntry {
 // The engine lists Jhallan twice under one id and version, the second time as a 1-hitpoint form
 // the site leaves out, so only fights with more than 1 hitpoint are looked up.
 const engineMonsters = new Map(getMonsters().filter((m) => m.skills.hp > 1).map((m) => [`${m.id}:${m.version}`, m]));
+// The engine's full list has both Nightmares' totems under one id with no version; the site's
+// data gives each its fight as the version (see scripts/build-data.ts).
+const totem = (row: { id: number, version: string, name: string }) => {
+  const found = getMonsters().find((m) => m.id === row.id && m.name === row.name && m.skills.hp > 1);
+  return found && { ...found, version: row.version };
+};
 
 export const monsters: MonsterEntry[] = (fightRows as {
   id: number, version: string, name: string, label: string, level: number, image: string, slayer?: 1, boss?: 1,
@@ -34,7 +40,7 @@ export const monsters: MonsterEntry[] = (fightRows as {
     image: row.image,
     slayer: row.slayer === 1,
     boss: row.boss === 1,
-    monster: inFight(engineMonsters.get(key)!),
+    monster: inFight((engineMonsters.get(key) ?? totem(row))!),
   };
 });
 

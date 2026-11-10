@@ -21,6 +21,16 @@ const optimiserFor = (name: string, untradeables = true) => {
 const worn = (setup: Setup) => SLOTS.flatMap((s) => (setup.equipment[s] ? [itemById.get(setup.equipment[s]!.id)!] : []));
 
 describe('best setup', () => {
+  test("magic charges a Nightmare totem fastest, as it does double damage", () => {
+    for (const [name, hp] of [['Totem (The Nightmare)', 300], ["Totem (Phosani's Nightmare)", 200]] as const) {
+      const m = monsters.find((x) => x.name === name)!;
+      expect(m.monster.skills.hp).toBe(hp);
+      const best = optimiserFor(name).optimise(50e6, CLASSES)!;
+      expect(best.style.type).toBe('magic');
+      expect(best.dps).toBeGreaterThan(optimiserFor(name).optimise(50e6, ['melee', 'ranged'])!.dps);
+    }
+  }, 120_000);
+
   test.each(['Vorkath', 'Zulrah', 'General Graardor', 'Abyssal demon'])('%s stays within each budget and gets better as it grows', (name) => {
     const o = optimiserFor(name);
     let last = 0;

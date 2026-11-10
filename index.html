@@ -20,10 +20,10 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script>
-      try {
-        var t = JSON.parse(localStorage.getItem('theme'));
-        document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      } catch (e) {}
+      // The saved theme, or the device's when none is saved or storage is blocked.
+      var t = null;
+      try { t = JSON.parse(localStorage.getItem('theme')); } catch (e) {}
+      document.documentElement.dataset.theme = t || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     </script>
   </head>
   <body>

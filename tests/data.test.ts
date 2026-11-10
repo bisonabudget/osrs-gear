@@ -70,6 +70,13 @@ describe('monsters', () => {
     for (const n of ['Vorkath', 'Zulrah', 'Abyssal demon', 'Chicken']) expect(names).toContain(n);
   });
 
+  test("both Nightmares' totems, uncharged only and told apart", () => {
+    const totems = monsterRows.filter((m) => m.name.startsWith('Totem ('));
+    expect(totems.map((m) => [m.name, m.skills[0]]).sort()).toEqual([["Totem (Phosani's Nightmare)", 200], ['Totem (The Nightmare)', 300]]);
+    expect(new Set(totems.map((m) => `${m.id}:${m.version}`)).size).toBe(2);
+    expect(totems.filter((m) => !/uncharged/.test(m.image))).toEqual([]);
+  });
+
   test('the engine and the worker have the same fights as the page', () => {
     // The engine's own list has a few entries twice.
     const keys = (list: { id: number, version: string }[]) => [...new Set(list.map((m) => `${m.id}:${m.version}`))].sort();
