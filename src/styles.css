@@ -551,9 +551,6 @@ p { margin: 0; }
 .switch input:checked + .switch-track::after { opacity: 1; }
 .switch input:focus-visible + .switch-track { outline: 2px solid var(--ink); outline-offset: 2px; }
 .switch img { width: 18px; height: 18px; object-fit: contain; }
-.defender { margin-top: 16px; }
-.defender select.stat-input { width: auto; max-width: none; text-align-last: auto; }
-.defender select:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .controls {
   display: flex;

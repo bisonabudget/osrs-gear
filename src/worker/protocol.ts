@@ -30,8 +30,6 @@ export interface CharacterInput {
   skills: Skills;
   onTask: boolean;
   untradeables: boolean;
-  /** The best defender earned, which those below it come with; null for none. */
-  defender: string | null;
   /** Leave out items whose Requirements the levels don't meet. */
   unlockedOnly: boolean;
   kandarinDiary: boolean;

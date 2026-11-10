@@ -19,7 +19,6 @@ import type { Price } from '../prices';
 import { Protection, protectionFor } from '../protection';
 import { meets } from '../requirements';
 import { Frontier, itemsOf, Option, Point } from './frontier';
-import { defenderEarned } from './defenders';
 import { ammoSaved, setFitsWeapon, SETS } from './specials';
 import { canAutocast, spellLevel } from './spellbook';
 import { spellKey, takesSunfire, withSunfire } from './sunfire';
@@ -234,13 +233,12 @@ export class Optimiser {
 
   /**
    * The cheapest way to get an Untradeable at today's prices. With untradeables off, only ways
-   * that need nothing earned in game count, and only the defenders the player has earned do.
+   * that need nothing earned in game count.
    */
   wayOf(item: Item): { way: Way, gp: number } | undefined {
     let best: { way: Way, gp: number } | undefined;
-    const earned = this.character.untradeables && defenderEarned(item.piece.name, this.character.defender);
     for (const way of item.ways) {
-      if (way.earned && !earned) continue;
+      if (way.earned && !this.character.untradeables) continue;
       let gp = way.coins;
       for (const [id, qty] of way.parts) gp += (this.prices.get(id)?.gp ?? NaN) * qty;
       if (!Number.isNaN(gp) && (!best || gp < best.gp)) best = { way, gp };

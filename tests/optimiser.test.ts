@@ -292,24 +292,6 @@ describe('untradeable costs', () => {
     expect(optimiserFor('Vorkath', false).costOf(byName('Avernic defender'))).toBeUndefined();
   });
 
-  test('only the defenders up to the best one earned count', () => {
-    const withDefender = (defender: string | null) => {
-      const m = monsters.find((x) => x.name === 'General Graardor')!;
-      return new Optimiser(m.monster, { skills, onTask: false, untradeables: true, unlockedOnly: true, kandarinDiary: true, chargeSpell: false, inWilderness: false, defender }, prices);
-    };
-    const rune = withDefender('Rune defender');
-    expect(rune.costOf(byName('Rune defender'))).toBe(0);
-    expect(rune.costOf(byName('Bronze defender'))).toBe(0);
-    expect(rune.costOf(byName('Dragon defender'))).toBeUndefined();
-    expect(rune.costOf(byName('Avernic defender'))).toBeUndefined();
-    expect(withDefender('Dragon defender').costOf(byName('Avernic defender'))).toBe(gp(22477));
-    expect(withDefender(null).costOf(byName('Bronze defender'))).toBeUndefined();
-    // Other earned items are still free.
-    expect(withDefender(null).costOf(byName('Fire cape'))).toBe(0);
-    const best = rune.optimise(Infinity, ['melee'])!;
-    expect(worn(best).map((i) => i.piece.name)).not.toContain('Avernic defender');
-  }, 120_000);
-
   test('a setup costs the sum of its items and ammo', () => {
     const o = optimiserFor('Vorkath');
     for (const budget of [10e6, 300e6, Infinity]) {

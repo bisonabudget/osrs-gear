@@ -23,8 +23,6 @@ export interface Character {
   onTask: boolean;
   /** Saturated hearts can't be bought, so with Untradeables off magic uses a magic potion. */
   untradeables: boolean;
-  /** The best defender earned, which those below it come with; null for none, left out for all. */
-  defender?: string | null;
   /** Leave out items whose Requirements the levels don't meet. */
   unlockedOnly: boolean;
   /** Enchanted bolts trigger their effects 10% more often with the Kandarin hard diary done. */
