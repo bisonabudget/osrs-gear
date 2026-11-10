@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { copyOf, customInfo, DEFAULT_MONSTER, monsterInfo, wikiImage } from './catalog';
+import { copyOf, customInfo, DEFAULT_MONSTER, itemImage, monsterInfo, wikiImage } from './catalog';
+import { DEFENDERS } from './optimiser/defenders';
 import type { MonsterInfo } from './catalog';
 import { CUSTOM_KEY } from './custom';
 import type { Character } from './hiscores';
@@ -57,6 +58,7 @@ export const App = () => {
   const skills = useMemo(() => ({ ...MAXED, ...storedSkills }), [storedSkills]);
   const [rsn, setRsn] = useStored<Omit<Character, 'skills'> | null>('rsn', null);
   const [untradeables, setUntradeables] = useStored('untradeables', true);
+  const [defender, setDefender] = useStored<string | null>('defender', 'Dragon defender');
   const [unlockedOnly, setUnlockedOnly] = useStored('unlockedOnly', true);
   const [kandarinDiary, setKandarinDiary] = useStored('kandarinDiary', true);
   const [chargeSpell, setChargeSpell] = useStored('chargeSpell', false);
@@ -88,8 +90,8 @@ export const App = () => {
   const wilderness = wildernessOf(taskDefault.name);
   const inWilderness = wilderness === 'always' || (wilderness === 'sometimes' && (wildernessChoices[monster.key] ?? false));
   const character: CharacterInput = useMemo(
-    () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness }),
-    [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness],
+    () => ({ skills, onTask, untradeables, defender, unlockedOnly, kandarinDiary, chargeSpell, inWilderness }),
+    [skills, onTask, untradeables, defender, unlockedOnly, kandarinDiary, chargeSpell, inWilderness],
   );
   const customStats = isCustom ? customMonster : null;
   // The raid and path level boxes only show for Tombs of Amascut monsters, and only they are scaled by them.
@@ -226,6 +228,19 @@ export const App = () => {
           <input type="checkbox" checked={untradeables} onChange={(e) => setUntradeables(e.target.checked)} />
           <span className="switch-track" aria-hidden="true" />
           Untradeables
+        </label>
+        <label className="level-box defender" title="The best Warriors' Guild defender you have. Those below it count too, and an Avernic defender needs a dragon one.">
+          {defender && <Img src={itemImage(`${defender}.png`)} alt="" />}
+          <span className="sr-only">Defender</span>
+          <select
+            className="stat-input"
+            value={defender ?? ''}
+            disabled={!untradeables}
+            onChange={(e) => setDefender(e.target.value || null)}
+          >
+            <option value="">No defender</option>
+            {DEFENDERS.map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
         </label>
         <label className="switch" title="Enchanted bolts trigger their effects 10% more often with the Kandarin hard diary done.">
           <input type="checkbox" checked={kandarinDiary} onChange={(e) => setKandarinDiary(e.target.checked)} />

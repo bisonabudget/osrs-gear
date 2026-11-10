@@ -33,7 +33,7 @@ An item that can't be bought on the Grand Exchange. One made from GE items or so
 _Avoid_: Unbuyable
 
 **Earned item**:
-An Untradeable got from a drop, a reward or points, with no GP to pay. It adds 0 GP to a Setup and is assumed owned unless the player switches Untradeables off, which also leaves out any Untradeable that needs one (an Avernic defender needs a dragon defender).
+An Untradeable got from a drop, a reward or points, with no GP to pay. It adds 0 GP to a Setup and is assumed owned unless the player switches Untradeables off, which also leaves out any Untradeable that needs one (an Avernic defender needs a dragon defender). Of the defenders, only those up to the best one the player says they have count.
 _Avoid_: Free item
 
 **Budget**:
