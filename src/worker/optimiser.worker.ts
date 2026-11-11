@@ -196,16 +196,21 @@ const handle = async (id: number, request: Request): Promise<Results[Request['ki
     }
     case 'slot': {
       const current = o.priced(toInput(request.setup));
-      return o.slotOptions(current, request.slot, request.classes).map(({ swap: s, alike }): SlotOption => ({
+      const nowTime = evaluate(current, o.monster, o.character, false, o.fightCache).killTime;
+      return o.slotOptions(current, request.slot, request.classes).map(({ swap: s, alike }): SlotOption => {
+        const saved = nowTime - evaluate(s.setup, o.monster, o.character, false, o.fightCache).killTime;
+        return {
         itemId: s.item.piece.id,
         alike: alike.map((a) => a.piece.id),
         dps: s.setup.dps,
+        timeSaved: Number.isFinite(saved) ? saved : null,
         netCost: s.netCost,
         price: o.costOf(s.item) ?? 0,
         priceTime: priceTime(o, s.item.piece.id),
         madeFrom: madeFrom(o, s.item.piece.id),
         setup: toRef(s.setup),
-      }));
+        };
+      });
     }
     default:
       throw new Error('Unknown request');

@@ -129,6 +129,8 @@ export interface SlotOption {
   /** Other items with exactly the same stats and DPS here, which share this row. */
   alike: number[];
   dps: number;
+  /** Seconds this item takes off each kill against the worn one (negative when slower), or null when either can't kill. */
+  timeSaved: number | null;
   netCost: number;
   price: number;
   priceTime: number | null;

@@ -1,7 +1,7 @@
 // The game's side panel: tabs along the top, the worn equipment in the middle.
 import { useEffect, useMemo, useState } from 'react';
 import { itemImage, itemInfo, wikiImage } from '../catalog';
-import { formatGp, listOf } from '../format';
+import { formatGp, formatSeconds, listOf } from '../format';
 import type { Character } from '../hiscores';
 import type { Bonuses, Outcome, Skills, Slot, SlotOption } from '../worker/protocol';
 import { Coins } from './Coins';
@@ -235,7 +235,7 @@ const SlotList = ({ slot, current, load, onClose, onChoose }: {
         autoFocus
         onChange={(e) => setQuery(e.target.value)}
       />
-      <div className="slot-list-cols"><span>Item</span><span>DPS</span><span>Price</span></div>
+      <div className="slot-list-cols"><span>Item</span><span>DPS</span><span>Per kill</span><span>Price</span></div>
       <ul>
         {!options && <li className="osrs-small">Working out every item…</li>}
         {shown.map((o) => {
@@ -254,6 +254,9 @@ const SlotList = ({ slot, current, load, onClose, onChoose }: {
                   )}
                 </span>
                 <span className="slot-item-dps">{o.dps.toFixed(2)}</span>
+                <span className={`slot-item-time${o.timeSaved !== null && o.timeSaved > 0.05 ? ' faster' : ''}`}>
+                  {o.timeSaved === null || Math.abs(o.timeSaved) < 0.05 ? '–' : `${o.timeSaved > 0 ? '−' : '+'}${formatSeconds(Math.abs(o.timeSaved))}`}
+                </span>
                 {item.untradeable && !o.madeFrom
                   ? <span className="coins coins-untradeable">Free</span>
                   : <Coins gp={o.price} title={o.madeFrom ?? undefined} />}

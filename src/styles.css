@@ -815,7 +815,7 @@ a.coins-untradeable:hover { border-color: var(--ink); color: var(--ink); }
 .slot-list-cols,
 .slot-list li button {
   display: grid;
-  grid-template-columns: 34px 1fr 48px 72px;
+  grid-template-columns: 34px 1fr 48px 56px 72px;
   align-items: center;
   gap: 8px;
 }
@@ -857,6 +857,8 @@ a.coins-untradeable:hover { border-color: var(--ink); color: var(--ink); }
 .slot-item-name { font-size: 14px; line-height: 1.2; }
 .slot-item-name small { display: block; margin-top: 1px; font-size: 12px; color: var(--osrs-dim); }
 .slot-item-dps { text-align: right; color: var(--osrs-yellow); font-variant-numeric: tabular-nums; font-size: 14px; }
+.slot-item-time { text-align: right; color: var(--osrs-dim); font-variant-numeric: tabular-nums; font-size: 13px; }
+.slot-item-time.faster { color: #0f0; }
 .slot-list .coins { justify-self: end; }
 
 .boost { display: flex; align-items: center; gap: 10px; font-size: 15px; }
