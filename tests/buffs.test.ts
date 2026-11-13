@@ -78,3 +78,15 @@ test('raids use their own potions', () => {
   expect(buildPlayer(setup, boss('Tekton'), character).boosts.ranged).toBe(21);
   expect(assumedBoosts(setup, character, boss('Vorkath')).potion).toBe('Ranging potion');
 });
+
+test('turning prayers and combat boosts off lowers DPS and drops them from the boosts shown', () => {
+  const weapon = piece('Rune crossbow');
+  const setup = { equipment: { ...emptyEquipment(), weapon, ammo: piece('Ruby bolts (e)') }, style: getCombatStylesForCategory(weapon.category)[1], spell: null };
+  const on = dpsOf(setup, monster, character);
+  expect(dpsOf(setup, monster, { ...character, prayers: false })).toBeLessThan(on);
+  expect(dpsOf(setup, monster, { ...character, boosts: false })).toBeLessThan(on);
+  const bare = { ...character, prayers: false, boosts: false };
+  expect(assumedBoosts(setup, character, monster)).toMatchObject({ prayers: ['Rigour'], potion: 'Ranging potion' });
+  expect(assumedBoosts(setup, bare, monster)).toMatchObject({ prayers: [], potion: null });
+  expect(buildPlayer(setup, monster, bare).boosts.ranged).toBe(0);
+});

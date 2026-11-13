@@ -60,6 +60,8 @@ export const App = () => {
   const [unlockedOnly, setUnlockedOnly] = useStored('unlockedOnly', true);
   const [kandarinDiary, setKandarinDiary] = useStored('kandarinDiary', true);
   const [chargeSpell, setChargeSpell] = useStored('chargeSpell', false);
+  const [prayers, setPrayers] = useStored('prayers', true);
+  const [boosts, setBoosts] = useStored('boosts', true);
   // Only the monsters where someone changed the on-task switch.
   const [taskChoices, setTaskChoices] = useStored<Record<string, boolean>>('onTask', {});
   const [wildernessChoices, setWildernessChoices] = useStored<Record<string, boolean>>('inWilderness', {});
@@ -88,8 +90,8 @@ export const App = () => {
   const wilderness = wildernessOf(taskDefault.name);
   const inWilderness = wilderness === 'always' || (wilderness === 'sometimes' && (wildernessChoices[monster.key] ?? false));
   const character: CharacterInput = useMemo(
-    () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness }),
-    [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness],
+    () => ({ skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness, prayers, boosts }),
+    [skills, onTask, untradeables, unlockedOnly, kandarinDiary, chargeSpell, inWilderness, prayers, boosts],
   );
   const customStats = isCustom ? customMonster : null;
   // The raid and path level boxes only show for Tombs of Amascut monsters, and only they are scaled by them.
@@ -355,7 +357,7 @@ export const App = () => {
               <button type="button" onClick={() => setEdited(null)}>Back to best</button>
             </div>
           )}
-          <Panel outcome={nothing ? null : outcome} skills={skills} rsn={rsn} onSkills={setSkills} loadSlot={loadSlot} onChoose={choose} busy={busy} />
+          <Panel outcome={nothing ? null : outcome} skills={skills} prayers={prayers} boosts={boosts} onPrayers={setPrayers} onBoosts={setBoosts} rsn={rsn} onSkills={setSkills} loadSlot={loadSlot} onChoose={choose} busy={busy} />
           {outcome && !nothing && <Upgrades outcome={outcome} budget={budget} onTake={takeUpgrade} busy={busy} />}
         </section>
 

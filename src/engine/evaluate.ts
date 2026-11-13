@@ -31,6 +31,10 @@ export interface Character {
   chargeSpell: boolean;
   /** Fighting in the Wilderness, where the Wilderness weapons get their bonus. */
   inWilderness: boolean;
+  /** Use the best prayers the levels allow. Off means none. On when left out. */
+  prayers?: boolean;
+  /** Drink the best potion for the style. Off means no combat boost. On when left out. */
+  boosts?: boolean;
 }
 
 export interface SetupInput {
@@ -61,6 +65,11 @@ export const prayersFor = (cls: CombatClass, { prayer, def }: Skills): Prayer[] 
   return both.length ? both : [...best(STRENGTH), ...best(ATTACK)];
 };
 
+/** The prayers worn: the best the levels allow, or none when prayers are off. */
+const chosenPrayers = (cls: CombatClass, character: Character): Prayer[] => (
+  character.prayers === false ? [] : prayersFor(cls, character.skills)
+);
+
 // Raids have their own potions that boost more than anything outside them: smelling salts in the
 // Tombs of Amascut and overloads (+) in the Chambers of Xeric. Each boosts every combat skill.
 const raidPotionFor = (monster: Monster): Potion | null => {
@@ -69,7 +78,8 @@ const raidPotionFor = (monster: Monster): Potion | null => {
   return null;
 };
 
-const potionFor = (cls: CombatClass, character: Character, monster: Monster): Potion => {
+const potionFor = (cls: CombatClass, character: Character, monster: Monster): Potion | null => {
+  if (character.boosts === false) return null;
   const raid = raidPotionFor(monster);
   if (raid !== null) return raid;
   if (cls === 'melee') return Potion.SUPER_COMBAT;
@@ -86,9 +96,11 @@ const SOULREAPER_STACKS = 5;
 /** The names of the prayers, potion and other boosts assumed for a setup. */
 export const assumedBoosts = ({ style, spell, equipment }: SetupInput, character: Character, monster: Monster) => {
   const cls = classOf(style);
+  const potion = potionFor(cls, character, monster);
   return {
-    prayers: prayersFor(cls, character.skills).map((p) => PrayerMap[p].name),
-    potion: PotionMap[potionFor(cls, character, monster)].name,
+    prayers: chosenPrayers(cls, character).map((p) => PrayerMap[p].name),
+    /** Null when combat boosts are off. */
+    potion: potion === null ? null : PotionMap[potion].name,
     // Only the ones that can change this class's DPS.
     effects: [
       ...(cls === 'ranged' && character.kandarinDiary ? ['the Kandarin hard diary'] : []),
@@ -109,8 +121,9 @@ const BLOCKING = new Set([
   UserIssueType.WEAPON_WRONG_MONSTER,
 ]);
 
-const boostsFor = (potion: Potion, skills: PlayerSkills): PlayerSkills => {
+const boostsFor = (potion: Potion | null, skills: PlayerSkills): PlayerSkills => {
   const boosts: PlayerSkills = { atk: 0, def: 0, hp: 0, magic: 0, prayer: 0, ranged: 0, str: 0, mining: 0, herblore: 0 };
+  if (potion === null) return boosts;
   return { ...boosts, ...PotionMap[potion].calculateFn(skills) };
 };
 
@@ -124,10 +137,10 @@ export const buildPlayer = (setup: SetupInput, monster: Monster, character: Char
     equipment: setup.equipment,
     style: setup.style,
     spell: setup.spell,
-    prayers: prayersFor(cls, character.skills),
+    prayers: chosenPrayers(cls, character),
   };
   player.buffs = {
-    ...player.buffs, potions: [potion], onSlayerTask: character.onTask, kandarinDiary: character.kandarinDiary, chargeSpell: character.chargeSpell,
+    ...player.buffs, potions: potion === null ? [] : [potion], onSlayerTask: character.onTask, kandarinDiary: character.kandarinDiary, chargeSpell: character.chargeSpell,
     inWilderness: character.inWilderness, markOfDarknessSpell: usesMark(setup.spell, character.skills),
     usingSunfireRunes: usesSunfire(setup.spell), soulreaperStacks: SOULREAPER_STACKS,
   };

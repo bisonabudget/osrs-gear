@@ -66,13 +66,18 @@ interface Props {
   skills: Skills;
   rsn: Omit<Character, 'skills'> | null;
   onSkills: (skills: Skills) => void;
+  /** Whether prayers and combat boosts are counted, and how to change that. */
+  prayers: boolean;
+  boosts: boolean;
+  onPrayers: (on: boolean) => void;
+  onBoosts: (on: boolean) => void;
   loadSlot: (slot: Slot) => Promise<SlotOption[]>;
   onChoose: (option: SlotOption) => void;
   /** A new setup is being worked out, so the one on show is about to change. */
   busy: boolean;
 }
 
-export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose, busy }: Props) => {
+export const Panel = ({ outcome, skills, rsn, onSkills, prayers, boosts, onPrayers, onBoosts, loadSlot, onChoose, busy }: Props) => {
   const [tab, setTab] = useState<Tab>('gear');
   const [openSlot, setOpenSlot] = useState<Slot | null>(null);
   const [showStats, setShowStats] = useState(false);
@@ -119,15 +124,36 @@ export const Panel = ({ outcome, skills, rsn, onSkills, loadSlot, onChoose, busy
             <p>Use the Kandarin diary switch to say whether you've done the hard diary, as it changes enchanted bolt DPS.</p>
           </div>
         )}
-        {tab === 'prayer' && outcome && (
+        {tab === 'prayer' && (
           <div className="osrs-note">
             <p className="osrs-title">Prayer and potion</p>
-            {outcome.stats.prayers.length
-              ? outcome.stats.prayers.map((p) => <div key={p} className="boost"><Img src={wikiImage(p)} alt="" />{p}</div>)
-              : <p>No combat prayer at this Prayer level.</p>}
-            <div className="boost"><Img src={wikiImage(POTION_IMAGES[outcome.stats.potion] ?? outcome.stats.potion)} alt="" />{outcome.stats.potion}</div>
-            <p className="osrs-small">The best prayer your Prayer and Defence levels allow and the best potion for the style are assumed.</p>
-            {outcome.stats.effects.length > 0 && <p className="osrs-small">Also counting {listOf(outcome.stats.effects)}.</p>}
+            <div className="switches">
+              <label className="switch">
+                <input type="checkbox" checked={prayers} onChange={(e) => onPrayers(e.target.checked)} />
+                <span className="switch-track" aria-hidden="true" />
+                Prayers
+              </label>
+              <label className="switch">
+                <input type="checkbox" checked={boosts} onChange={(e) => onBoosts(e.target.checked)} />
+                <span className="switch-track" aria-hidden="true" />
+                Combat boosts
+              </label>
+            </div>
+            {outcome && (
+              <>
+                {outcome.stats.prayers.map((p) => <div key={p} className="boost"><Img src={wikiImage(p)} alt="" />{p}</div>)}
+                {!outcome.stats.prayers.length && <p>{prayers ? 'No combat prayer at this Prayer level.' : 'No prayer.'}</p>}
+                {outcome.stats.potion
+                  ? <div className="boost"><Img src={wikiImage(POTION_IMAGES[outcome.stats.potion] ?? outcome.stats.potion)} alt="" />{outcome.stats.potion}</div>
+                  : <p>No combat potion.</p>}
+                <p className="osrs-small">
+                  {prayers || boosts
+                    ? `${prayers ? 'The best prayer your Prayer and Defence levels allow' : ''}${prayers && boosts ? ' and ' : ''}${boosts ? `${prayers ? 'the' : 'The'} best potion for the style` : ''} ${prayers && boosts ? 'are' : 'is'} assumed.`
+                    : 'Worked out with no prayer and no potion.'}
+                </p>
+                {outcome.stats.effects.length > 0 && <p className="osrs-small">Also counting {listOf(outcome.stats.effects)}.</p>}
+              </>
+            )}
           </div>
         )}
         {tab === 'magic' && outcome && (
