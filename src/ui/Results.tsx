@@ -4,6 +4,7 @@ import {
   formatAgo, formatAmount, formatGp, formatPercent, formatSeconds, listOf,
 } from '../format';
 import type { Outcome, SetupView, Slot, Use } from '../worker/protocol';
+import { showsXp, xpPerHour } from '../xp';
 import { Coins, Untradeable } from './Coins';
 import { Img } from './Img';
 
@@ -50,6 +51,18 @@ const Figures = ({ outcome: { stats } }: Part) => (
     </div>
   </>
 );
+
+/** Experience an hour of attacking non-stop, for monsters people train on. */
+const XpHour = ({ outcome: { stats, setup }, monster }: Part & { monster: MonsterInfo }) => {
+  const rate = showsXp(monster.name) ? xpPerHour(monster.name, setup.style, stats.dps) : null;
+  if (!rate) return null;
+  return (
+    <section className="xp">
+      <p className="label">XP an hr</p>
+      <p className="xp-total">{formatAmount(rate.xp)}</p>
+    </section>
+  );
+};
 
 const KINDS: Use['kind'][] = ['ammo', 'runes', 'charges'];
 
@@ -183,6 +196,7 @@ export const Results = ({ outcome, monster, budget, busy, onKeep }: Props) => (
       <Headline outcome={outcome} monster={monster} />
       <div className="figures"><Figures outcome={outcome} /></div>
     </div>
+    <XpHour outcome={outcome} monster={monster} />
     <section className="cost">
       <CostTotal outcome={outcome} budget={budget} onKeep={onKeep} />
       <Bill outcome={outcome} monster={monster} />

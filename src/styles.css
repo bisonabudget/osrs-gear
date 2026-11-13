@@ -1481,3 +1481,22 @@ select.stat-input { max-width: 76px; font-weight: 500; text-align-last: center; 
   background: var(--tile);
 }
 .stat-group img { height: 20px; }
+
+/* Experience an hour, on the same stone as the DPS readout. */
+.xp {
+  padding: 12px 16px;
+  border: 2px solid var(--stone-edge);
+  border-radius: var(--radius);
+  background: var(--stone);
+  color: var(--osrs-text);
+  text-shadow: 1px 1px 0 #000;
+}
+.xp .label { margin: 0; color: var(--osrs-orange); }
+.xp-total {
+  margin: 2px 0 0;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--osrs-yellow);
+  font-variant-numeric: tabular-nums;
+}
