@@ -185,8 +185,15 @@ const handle = async (id: number, request: Request): Promise<Results[Request['ki
   if ((request.kind === 'best' || request.kind === 'evaluate') && id !== newest) throw new Error('Replaced by a newer search');
   switch (request.kind) {
     case 'best': {
-      const setup = o.optimise(request.budget, request.classes);
-      return setup ? outcome(o, setup, request) : null;
+      // Gear is always picked as if prayers and boosts were on, so switching them doesn't swap it.
+      // With either off, that same gear is worked out again without them.
+      const { prayers, boosts } = request.character;
+      const chooser = prayers && boosts
+        ? o
+        : await optimiserFor(request.monster, request.custom, request.raid, request.cm, request.drains, { ...request.character, prayers: true, boosts: true });
+      const setup = chooser.optimise(request.budget, request.classes);
+      if (!setup) return null;
+      return outcome(o, chooser === o ? setup : o.priced(toInput(toRef(setup))), request);
     }
     case 'evaluate':
       return outcome(o, o.priced(toInput(request.setup)), request);
